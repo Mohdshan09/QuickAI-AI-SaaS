@@ -12,8 +12,10 @@ import {
   RemoveObj,
 } from "./pages/export.js";
 import RemoveBG from "./pages/RemoveBG.jsx";
-import { useAuth } from "@clerk/clerk-react";
-import { useEffect } from "react";
+import Jobs from "./pages/career/Jobs.jsx";
+import JobDetail from "./pages/career/JobDetail.jsx";
+import MatchReport from "./pages/career/MatchReport.jsx";
+import Resumes from "./pages/career/Resumes.jsx";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
@@ -24,6 +26,10 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/ai" element={<Layout />}>
           <Route index element={<Dashboard />} />
+          <Route path="jobs" element={<Jobs />} />
+          <Route path="jobs/:id" element={<JobDetail />} />
+          <Route path="jobs/:id/match" element={<MatchReport />} />
+          <Route path="resumes" element={<Resumes />} />
           <Route path="write-article" element={<Article />} />
           <Route path="blog-titles" element={<Title />} />
           <Route path="gen-image" element={<GenImage />} />

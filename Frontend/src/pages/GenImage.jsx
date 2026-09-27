@@ -46,7 +46,7 @@ const GenImage = () => {
         toast.error(data.message);
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.response?.data?.message || err.message);
     }
 
     setLoading(false);

@@ -9,6 +9,8 @@ import {
   FileText,
   Users,
   LogOut,
+  Briefcase,
+  FileUser,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -16,18 +18,31 @@ const Sidebar = ({ sidebar, setSidebar }) => {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
 
-  // Navigation items for the sidebar
-
+  // Primary: the job-hunting flow
   const navItems = [
     { to: "/ai", label: "Dashboard", Icon: House },
+    { to: "/ai/jobs", label: "Jobs", Icon: Briefcase },
+    { to: "/ai/resumes", label: "Resumes", Icon: FileUser },
+    { to: "/ai/community", label: "Community", Icon: Users },
+  ];
+
+  // Secondary: the general AI tools
+  const extraItems = [
     { to: "/ai/write-article", label: "Write Article", Icon: SquarePen },
     { to: "/ai/gen-image", label: "Generate Images", Icon: Image },
     { to: "/ai/remove-bg", label: "Remove Background", Icon: Eraser },
     { to: "/ai/review-resume", label: "Review Resume", Icon: FileText },
     { to: "/ai/blog-titles", label: "Blog Titles", Icon: Hash },
     { to: "/ai/remove-obj", label: "Remove Object", Icon: Scissors },
-    { to: "/ai/community", label: "Community", Icon: Users },
   ];
+
+  const linkClass = ({ isActive }) =>
+    `px-3.5 py-2.5 flex items-center gap-3 rounded ${
+      isActive
+        ? "bg-gradient-to-r from-[#3c81f6] to-[#9234EA] text-white"
+        : ""
+    }`;
+  const iconClass = (isActive) => `w-4 h-4 ${isActive ? "text-white" : ""}`;
 
   return (
     <div
@@ -51,17 +66,30 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               to={to}
               end={to === "/ai"}
               onClick={() => setSidebar(false)}
-              className={({ isActive }) =>
-                `px-3.5 py-2.5 flex items-center gap-3 rounded ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#3c81f6] to-[#9234EA] text-white"
-                    : ""
-                }`
-              }
+              className={linkClass}
             >
               {({ isActive }) => (
                 <>
-                  <Icon className={`w-4 h-4 ${isActive ? "text-white" : ""}`} />
+                  <Icon className={iconClass(isActive)} />
+                  {label}
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          <p className="px-3.5 mt-4 mb-1 text-xs font-medium text-gray-400 uppercase tracking-wide">
+            Extras
+          </p>
+          {extraItems.map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={() => setSidebar(false)}
+              className={linkClass}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon className={iconClass(isActive)} />
                   {label}
                 </>
               )}

@@ -1,24 +1,37 @@
 // Generate Articles
 
 import { clerkClient } from "@clerk/express";
-import OpenAI from "openai";
 import sql from "../config/Neon.js";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import FormData from "form-data";
 import fs from "fs";
-
-const AI = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-});
+import { AI } from "../config/ai.js";
 
 import pdf from "pdf-parse/lib/pdf-parse.js";
+
+const MAX_PROMPT_LENGTH = 1000;
+const ARTICLE_LENGTHS = [800, 1500, 3000, 5000];
+
+const badRequest = (res, message) =>
+  res.status(400).json({ success: false, message });
+
+const isValidPrompt = (prompt) =>
+  typeof prompt === "string" &&
+  prompt.trim().length > 0 &&
+  prompt.length <= MAX_PROMPT_LENGTH;
 
 export const GenArticle = async (req, res) => {
   try {
     const { userId } = req.auth();
     const { prompt, length } = req.body;
+
+    if (!isValidPrompt(prompt)) {
+      return badRequest(res, `Prompt must be 1-${MAX_PROMPT_LENGTH} characters.`);
+    }
+    if (!ARTICLE_LENGTHS.includes(length)) {
+      return badRequest(res, "Invalid article length.");
+    }
 
     const plan = req.plan;
     const free_usage = req.free_usage;
@@ -26,13 +39,14 @@ export const GenArticle = async (req, res) => {
     if (plan != "premium" && free_usage >= 10) {
       return res.json({
         success: false,
-        messsage: "Limit reached. Upgrade to continue.",
+        message: "Limit reached. Upgrade to continue.",
       });
     }
 
     //Generate article using AI service
     const response = await AI.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
+      reasoning_effort: "none",
       messages: [
         {
           role: "user",
@@ -40,7 +54,7 @@ export const GenArticle = async (req, res) => {
         },
       ],
       temperature: 0.8,
-      max_tokens: length,
+      max_tokens: Math.min(Math.ceil(length * 1.5), 8000),
     });
 
     const content = response.choices?.[0].message?.content;
@@ -79,19 +93,24 @@ export const genBlogTitle = async (req, res) => {
     const { userId } = req.auth();
     const { prompt } = req.body;
 
+    if (!isValidPrompt(prompt)) {
+      return badRequest(res, `Prompt must be 1-${MAX_PROMPT_LENGTH} characters.`);
+    }
+
     const plan = req.plan;
     const free_usage = req.free_usage;
 
     if (plan != "premium" && free_usage >= 10) {
       return res.json({
         success: false,
-        messsage: "Limit reached. Upgrade to continue.",
+        message: "Limit reached. Upgrade to continue.",
       });
     }
 
     //Generate blog title using AI service
     const result = await AI.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
+      reasoning_effort: "none",
       messages: [
         {
           role: "user",
@@ -138,7 +157,12 @@ export const genImage = async (req, res) => {
     const { userId } = req.auth();
     const { prompt, publish } = req.body;
 
+    if (!isValidPrompt(prompt)) {
+      return badRequest(res, `Prompt must be 1-${MAX_PROMPT_LENGTH} characters.`);
+    }
+
     const plan = req.plan;
+    const free_usage = req.free_usage;
 
     if (plan != "premium" && free_usage >= 5) {
       return res.json({
@@ -212,6 +236,8 @@ export const removeImageBG = async (req, res) => {
 
     //remove background using AI service
 
+    if (!image) return badRequest(res, "Please upload an image.");
+
     const { secure_url } = await cloudinary.uploader.upload(image.path, {
       transformation: [
         {
@@ -246,6 +272,10 @@ export const removeImageObject = async (req, res) => {
     const { object } = req.body;
     const image = req.file;
 
+    if (typeof object !== "string" || !/^[a-zA-Z ]{1,40}$/.test(object)) {
+      return badRequest(res, "Object name must be 1-40 letters.");
+    }
+
     const plan = req.plan;
 
     if (plan != "premium") {
@@ -256,6 +286,8 @@ export const removeImageObject = async (req, res) => {
     }
 
     //remove background using AI service
+
+    if (!image) return badRequest(res, "Please upload an image.");
 
     const { public_id } = await cloudinary.uploader.upload(image.path);
 
@@ -293,6 +325,7 @@ export const resumeReview = async (req, res) => {
     const { userId } = req.auth();
     const resume = req.file;
     const plan = req.plan;
+    const free_usage = req.free_usage;
 
     if (plan != "premium") {
       return res.json({
@@ -302,6 +335,8 @@ export const resumeReview = async (req, res) => {
     }
 
     //resume Analyzer
+    if (!resume) return badRequest(res, "Please upload a PDF resume.");
+
     if (resume.size > 5 * 1024 * 1024) {
       return res.json({
         success: false,

@@ -41,7 +41,7 @@ const Article = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.messasge);
+      toast.error(error.response?.data?.message || error.message);
     }
 
     setLoading(false);

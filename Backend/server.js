@@ -1,10 +1,12 @@
 import express from "express";
+import multer from "multer";
 import cors from "cors";
 import "dotenv/config";
 import { clerkMiddleware, requireAuth } from '@clerk/express'
 import aiRouter from "./routes/AIroutes.js";
 import connectCloudinary from "./config/cloudinary.js";
 import userRouter from "./routes/User.js";
+import careerRouter from "./routes/Career.js";
 
 
 const app = express();
@@ -23,6 +25,16 @@ app.get("/",(req,res) => {
 app.use(requireAuth());
 app.use("/api/ai",aiRouter);
 app.use("/api/user",userRouter)
+app.use("/api/career",careerRouter)
+
+// Turn upload errors (file too large, wrong type) into a clean 400
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError || err.status === 400) {
+        const message = err.code === "LIMIT_FILE_SIZE" ? "File is too large (max 5MB)." : err.message;
+        return res.status(400).json({ success: false, message });
+    }
+    next(err);
+});
 
 
 const port = process.env.PORT || 3000;

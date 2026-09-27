@@ -12,7 +12,7 @@ const CreationItem = ({ item }) => {
         <div>
           <h2>{item.prompt}</h2>
           <p className="text-gray-500">
-            {item.type} - {new Date(item.created_at).toLocaleDateString()}
+            {item.content_type} - {new Date(item.created_at).toLocaleDateString()}
           </p>
         </div>
         <button className="bg-[#eff6ff] border border-bg-[#BFDBFE] text-bg-[#1e40af] px-4 py-1 rounded-full">
@@ -21,7 +21,7 @@ const CreationItem = ({ item }) => {
       </div>
       {expanded && (
         <div>
-          {item.type === "image" ? (
+          {item.content_type === "image" ? (
             <div>
               <img className="mt-3 w-full max-w-md" src={item.content} alt="" />
             </div>
