@@ -26,6 +26,8 @@ export const useCareerApi = () => {
       listResumes: () => request("get", "/api/career/resumes"),
       uploadResume: (formData) =>
         request("post", "/api/career/resumes", { data: formData, isForm: true }),
+      createResumeFromText: (title, text) =>
+        request("post", "/api/career/resumes/text", { data: { title, text } }),
       deleteResume: (id) => request("delete", `/api/career/resumes/${id}`),
       // jobs
       listJobs: () => request("get", "/api/career/jobs"),
@@ -41,6 +43,15 @@ export const useCareerApi = () => {
       setMatchProgress: (jobId, resumeId, itemId, done) =>
         request("patch", `/api/career/jobs/${jobId}/match/progress`, {
           data: { resumeId, itemId, done },
+        }),
+      // tailored resume
+      getTailor: (jobId, resumeId) =>
+        request("get", `/api/career/jobs/${jobId}/tailor?resumeId=${resumeId}`),
+      runTailor: (jobId, resumeId, force = false) =>
+        request("post", `/api/career/jobs/${jobId}/tailor`, { data: { resumeId, force } }),
+      setTailorAccept: (jobId, resumeId, key, accepted) =>
+        request("patch", `/api/career/jobs/${jobId}/tailor/accept`, {
+          data: { resumeId, key, accepted },
         }),
     }),
     [request]

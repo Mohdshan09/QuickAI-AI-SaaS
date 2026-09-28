@@ -76,6 +76,35 @@ const MatchTab = ({ match, history, hasResumes, onOpenReport }) => {
   );
 };
 
+const TailoredTab = ({ hasResumes, onOpen }) => {
+  if (!hasResumes) {
+    return (
+      <Card className="text-center py-10">
+        <p className="text-sm text-gray-500">Upload a resume first to tailor it.</p>
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex-1 min-w-[240px]">
+          <p className="text-sm font-medium text-slate-700">Tailor your resume for this job</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Rewrite your bullets to match the posting — accept or reject each change, then export a
+            PDF. Premium.
+          </p>
+        </div>
+        <button
+          onClick={onOpen}
+          className="flex items-center gap-2 bg-gradient-to-r from-[#226bff] to-[#65adff] text-white px-4 py-1.5 rounded-lg text-sm shrink-0"
+        >
+          Open tailor <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </Card>
+  );
+};
+
 const LockedTab = ({ name }) => (
   <Card className="flex flex-col items-center justify-center text-center py-12 text-gray-500">
     <Lock className="w-8 h-8 mb-2 text-gray-400" />
@@ -208,7 +237,12 @@ const JobDetail = () => {
             onOpenReport={() => navigate(`/ai/jobs/${id}/match`)}
           />
         )}
-        {tab === "Tailored resume" && <LockedTab name="Tailored resume" />}
+        {tab === "Tailored resume" && (
+          <TailoredTab
+            hasResumes={hasResumes}
+            onOpen={() => navigate(`/ai/jobs/${id}/tailor`)}
+          />
+        )}
         {tab === "Cover letter" && <LockedTab name="Cover letter" />}
         {tab === "Interview prep" && <LockedTab name="Interview prep" />}
         {tab === "Posting" && (

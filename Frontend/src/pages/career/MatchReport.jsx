@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Copy,
@@ -95,6 +95,7 @@ const PlanItem = ({ item, done, onToggle }) => (
 const MatchReport = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const api = useCareerApi();
 
   const [job, setJob] = useState(null);
@@ -124,7 +125,12 @@ const MatchReport = () => {
         setHistory(jobData.scoreHistory || []);
         if (resumeData.success) {
           setResumes(resumeData.resumes);
-          setResumeId(jobData.job.resume_id || resumeData.resumes[0]?.id || "");
+          const preselect = Number(params.get("resumeId"));
+          setResumeId(
+            preselect > 0
+              ? preselect
+              : jobData.job.resume_id || resumeData.resumes[0]?.id || ""
+          );
         }
       } catch (err) {
         toast.error(err.response?.data?.message || err.message);

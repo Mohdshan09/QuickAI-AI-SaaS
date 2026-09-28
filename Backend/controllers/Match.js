@@ -17,7 +17,7 @@ const historyFor = (jobId) => sql`
 `;
 
 // --- AI call 1: pull the requirements out of the posting (cached per job) ---
-const extractRequirements = (description) =>
+export const extractRequirements = (description) =>
   generateJSON({
     maxTokens: 1500,
     validate: (o) => Array.isArray(o.keywords),

@@ -5,6 +5,7 @@ import { uploadPdf } from "../config/multer.js";
 import { planLimit } from "../middlewares/planLimit.js";
 import {
   uploadResume,
+  createResumeFromText,
   listResumes,
   deleteResume,
   createJob,
@@ -14,11 +15,13 @@ import {
   deleteJob,
 } from "../controllers/Career.js";
 import { createMatch, getMatch, setMatchProgress } from "../controllers/Match.js";
+import { createTailor, getTailor, setTailorAccept } from "../controllers/Tailor.js";
 
 const careerRouter = express.Router();
 
 // resumes
 careerRouter.post("/resumes", aiRateLimit, auth, uploadPdf.single("resume"), uploadResume);
+careerRouter.post("/resumes/text", auth, createResumeFromText);
 careerRouter.get("/resumes", auth, listResumes);
 careerRouter.delete("/resumes/:id", auth, deleteResume);
 
@@ -33,5 +36,10 @@ careerRouter.delete("/jobs/:id", auth, deleteJob);
 careerRouter.get("/jobs/:id/match", auth, getMatch);
 careerRouter.post("/jobs/:id/match", aiRateLimit, auth, planLimit("match", 4), createMatch);
 careerRouter.patch("/jobs/:id/match/progress", auth, setMatchProgress);
+
+// tailored resume (premium only)
+careerRouter.get("/jobs/:id/tailor", auth, getTailor);
+careerRouter.post("/jobs/:id/tailor", aiRateLimit, auth, planLimit("tailored", 0), createTailor);
+careerRouter.patch("/jobs/:id/tailor/accept", auth, setTailorAccept);
 
 export default careerRouter;

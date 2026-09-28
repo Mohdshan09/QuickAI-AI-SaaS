@@ -110,6 +110,41 @@ export const deleteResume = async (req, res) => {
   }
 };
 
+// Create a resume from plain text (used by "Save & re-check" after tailoring).
+export const createResumeFromText = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const title = isText(req.body.title, 1, 120) ? req.body.title.trim() : "Tailored resume";
+    const text = typeof req.body.text === "string" ? req.body.text.trim() : "";
+
+    if (text.length < RESUME_MIN)
+      return badRequest(res, `Resume text must be at least ${RESUME_MIN} characters.`);
+
+    const cap = RESUME_CAP[req.plan] ?? RESUME_CAP.free;
+    const [{ count }] = await sql`
+      SELECT count(*)::int AS count FROM resumes WHERE user_id = ${userId}
+    `;
+    if (count >= cap) {
+      return res.status(403).json({
+        success: false,
+        message:
+          req.plan === "premium"
+            ? `You can store up to ${cap} resumes.`
+            : "Free plan allows 1 resume. Upgrade to store more.",
+      });
+    }
+
+    const [resume] = await sql`
+      INSERT INTO resumes (user_id, title, text)
+      VALUES (${userId}, ${title}, ${text.slice(0, RESUME_MAX)})
+      RETURNING id, title, created_at
+    `;
+    res.json({ success: true, resume });
+  } catch (error) {
+    serverError(res, error);
+  }
+};
+
 // ---- jobs ---------------------------------------------------------------
 export const createJob = async (req, res) => {
   try {
