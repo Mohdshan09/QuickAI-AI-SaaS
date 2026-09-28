@@ -17,37 +17,31 @@ const guardNumbers = (tailored, original, resumeDigits) => {
     : { text: tailored, kept_original: false };
 };
 
+// The model suggests SMALL EDITS to the EXISTING resume — it does not rewrite or
+// restructure it. Each edit's "original" is a verbatim substring we can find and
+// replace, so the exported resume stays complete and keeps every section.
 const tailorAI = (resumeText, description, keywords) =>
   generateJSON({
-    // A full-resume structured rewrite (every section, each bullet as
-    // original+tailored+reason) is large; too low a cap truncates the JSON.
-    maxTokens: 8000,
-    validate: (o) => Array.isArray(o.sections),
-    prompt: `Rewrite this resume so it is tailored to the job posting. Improve wording, reorder for relevance and surface experience that is already there — never invent anything.
+    maxTokens: 3000,
+    validate: (o) => Array.isArray(o.changes),
+    prompt: `Tailor this resume to the job by suggesting a small set of targeted EDITS to the EXISTING resume. Do NOT rewrite or restructure the whole resume. Keep everything else exactly as it is.
 
 Return JSON:
 {
-  "header": "The candidate's name and contact lines, copied VERBATIM from the top of the resume",
-  "summary": { "original": "existing summary or ''", "tailored": "rewritten summary (OMIT this field if unchanged)" },
-  "sections": [
-    { "heading": "Experience — Company / Role (use the resume's own wording)",
-      "bullets": [
-        { "original": "EXACT bullet copied from the resume",
-          "tailored": "rewritten bullet aimed at the job (OMIT if unchanged)",
-          "reason": "why, under 12 words (OMIT if unchanged)" }
-      ] }
-  ],
-  "skills": { "original": ["as listed in the resume"], "tailored": ["reordered / job-relevant, only skills the resume supports"] }
+  "changes": [
+    { "original": "EXACT text copied verbatim from the resume — a whole bullet line, the summary sentence(s), a role title line, or the skills line",
+      "tailored": "the improved version: same facts, better aligned to the job",
+      "reason": "why, under 12 words" }
+  ]
 }
 
 Rules:
-- NEVER invent employers, job titles, dates, degrees, numbers or skills the resume doesn't show. Only rewrite, reorder and bring forward what is already there.
-- Use these job keywords ONLY where the resume already supports them: ${keywords.join(", ") || "(none)"}.
-- Keep each bullet to at most 2 lines and start it with a strong action verb.
-- Keep every "reason" under 12 words.
-- "original" fields MUST be copied verbatim from the resume.
-- IMPORTANT — keep the response small: for any bullet or summary you DON'T change, output ONLY its "original" field and OMIT "tailored" and "reason" entirely. Only changed items include "tailored" (and "reason").
-- Include EVERY content section of the resume (experience, projects, education, etc.), not just the ones you change, so the result is a complete resume.
+- Each "original" MUST be an exact, contiguous, verbatim copy of text from the resume (so it can be found and replaced). Copy it character-for-character.
+- Edits may target: bullet lines, the summary, a role/title line, or the skills line (e.g. add a job keyword the resume already supports to the existing skills list).
+- NEVER invent employers, titles, dates, numbers, degrees, or skills the resume doesn't show. Only rephrase/strengthen what is already there and surface supported keywords.
+- Prefer these job keywords where the resume supports them: ${keywords.join(", ") || "(none)"}.
+- Keep each edited line about the same length (bullets ≤ 2 lines), starting with a strong verb.
+- Return at most 12 changes — the highest-impact ones. Do NOT include lines you aren't changing.
 
 Resume:
 """
@@ -107,41 +101,35 @@ export const createTailor = async (req, res) => {
 
     const out = await tailorAI(resume.text, job.description, keywords);
 
-    // Deterministic guardrail + normalize. An omitted/empty "tailored" (or one
-    // equal to the original) means the model left the line unchanged.
+    // Keep only real, applicable edits: the "original" must be a verbatim
+    // substring of the resume (so we can find & replace it and never show a
+    // fabricated quote), and the tailored text must not invent numbers.
     const resumeDigits = new Set(digitRuns(resume.text));
-    const norm = (originalRaw, tailoredRaw, reasonRaw) => {
-      const original = originalRaw ?? "";
-      const t = (tailoredRaw ?? "").trim();
-      if (!t || t === original.trim()) {
-        return { original, tailored: original, reason: "", kept_original: false };
-      }
-      const g = guardNumbers(t, original, resumeDigits);
-      return {
+    const seen = new Set();
+    const changes = [];
+    for (const c of out.changes || []) {
+      if (!c || typeof c.original !== "string" || typeof c.tailored !== "string") continue;
+      const original = c.original;
+      if (!resume.text.includes(original)) continue; // must be verbatim & findable
+      const tailored = c.tailored.trim();
+      if (!tailored || tailored === original.trim()) continue; // no-op
+      if (seen.has(original)) continue; // one edit per original
+      seen.add(original);
+      const g = guardNumbers(tailored, original, resumeDigits);
+      changes.push({
+        id: String(changes.length),
         original,
         tailored: g.text,
-        reason: g.kept_original ? "" : reasonRaw ?? "",
+        reason: g.kept_original ? "" : c.reason ?? "",
         kept_original: g.kept_original,
-      };
-    };
-
-    const s = norm(out.summary?.original, out.summary?.tailored, "");
-    const summary = { original: s.original, tailored: s.tailored, kept_original: s.kept_original };
-    const sections = (out.sections || []).map((sec) => ({
-      heading: sec.heading || "",
-      bullets: (sec.bullets || []).map((b) => norm(b.original, b.tailored, b.reason)),
-    }));
-    const skills = {
-      original: Array.isArray(out.skills?.original) ? out.skills.original : [],
-      tailored: Array.isArray(out.skills?.tailored) ? out.skills.tailored : [],
-    };
+      });
+      if (changes.length >= 12) break;
+    }
 
     const data = {
-      header: out.header || "",
-      summary,
-      sections,
-      skills,
-      accepted: {}, // empty = everything accepted by default
+      resumeText: resume.text, // the full, untouched resume — the base we edit
+      changes,
+      accepted: {}, // empty = every change accepted by default
     };
 
     const [inserted] = await sql`

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, X, Printer, RefreshCw, Sparkles, Lock, Wand2 } from "lucide-react";
+import { ArrowLeft, Check, X, Printer, RefreshCw, Sparkles, Lock, Wand2, Eye } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCareerApi } from "../../lib/careerApi";
 import { Card } from "../../components/career/MatchVisuals";
 import { wordDiff } from "../../lib/wordDiff";
+import { applyTailored, acceptedCount } from "../../lib/tailorApply";
 
 const DiffText = ({ parts, kind }) => (
-  <p className="text-sm leading-relaxed text-slate-700">
+  <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
     {parts.map((p, i) =>
       p[kind] ? (
         <span
@@ -27,7 +28,7 @@ const DiffText = ({ parts, kind }) => (
   </p>
 );
 
-const ChangeCard = ({ label, original, tailored, reason, keptOriginal, accepted, onToggle }) => {
+const ChangeCard = ({ original, tailored, reason, keptOriginal, accepted, onToggle }) => {
   const diff = useMemo(() => wordDiff(original, tailored), [original, tailored]);
   return (
     <div
@@ -35,10 +36,9 @@ const ChangeCard = ({ label, original, tailored, reason, keptOriginal, accepted,
         accepted ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50/60 opacity-70"
       }`}
     >
-      {label && <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-2">{label}</p>}
       <div className="grid md:grid-cols-2 gap-x-5 gap-y-2">
         <div>
-          <p className="text-[11px] text-gray-400 mb-1">Original</p>
+          <p className="text-[11px] text-gray-400 mb-1">Your resume</p>
           <DiffText parts={diff.original} kind="removed" />
         </div>
         <div>
@@ -59,7 +59,7 @@ const ChangeCard = ({ label, original, tailored, reason, keptOriginal, accepted,
                 : "text-gray-500 border-gray-200 hover:bg-gray-50"
             }`}
           >
-            <Check className="w-3.5 h-3.5" /> Accept
+            <Check className="w-3.5 h-3.5" /> Apply
           </button>
           <button
             onClick={() => onToggle(false)}
@@ -69,7 +69,7 @@ const ChangeCard = ({ label, original, tailored, reason, keptOriginal, accepted,
                 : "text-gray-500 border-gray-200 hover:bg-gray-50"
             }`}
           >
-            <X className="w-3.5 h-3.5" /> Reject
+            <X className="w-3.5 h-3.5" /> Skip
           </button>
         </div>
       </div>
@@ -92,6 +92,7 @@ const TailorResume = () => {
   const [running, setRunning] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [premiumBlocked, setPremiumBlocked] = useState(false);
 
   useEffect(() => {
@@ -177,29 +178,12 @@ const TailorResume = () => {
     }
   };
 
-  const buildText = () => {
-    const lines = [];
-    if (tailored.header) lines.push(tailored.header, "");
-    const sum = isAccepted("summary") ? tailored.summary?.tailored : tailored.summary?.original;
-    if (sum) lines.push("SUMMARY", sum, "");
-    (tailored.sections || []).forEach((s, si) => {
-      lines.push((s.heading || "").toUpperCase());
-      (s.bullets || []).forEach((b, bi) => {
-        const text = isAccepted(`${si}:${bi}`) ? b.tailored : b.original;
-        if (text) lines.push(`• ${text}`);
-      });
-      lines.push("");
-    });
-    const skills = isAccepted("skills") ? tailored.skills?.tailored : tailored.skills?.original;
-    if (skills?.length) lines.push("SKILLS", skills.join(", "));
-    return lines.join("\n").trim();
-  };
-
   const saveAndRecheck = async () => {
     try {
       setSaving(true);
       const title = `${job.role} — tailored`.slice(0, 120);
-      const data = await api.createResumeFromText(title, buildText());
+      const text = applyTailored(tailored, accepted);
+      const data = await api.createResumeFromText(title, text);
       if (data.success) {
         toast.success("Saved as a new resume");
         navigate(`/ai/jobs/${id}/match?resumeId=${data.resume.id}`);
@@ -222,10 +206,9 @@ const TailorResume = () => {
   }
   if (!job) return null;
 
-  const summaryChanged = tailored && tailored.summary?.tailored !== tailored.summary?.original;
-  const skillsChanged =
-    tailored &&
-    JSON.stringify(tailored.skills?.tailored || []) !== JSON.stringify(tailored.skills?.original || []);
+  const changes = Array.isArray(tailored?.changes) ? tailored.changes : [];
+  const outdated = tailored && !Array.isArray(tailored.changes); // pre-redesign row
+  const appliedCount = acceptedCount(tailored, accepted);
 
   return (
     <div className="h-full overflow-y-scroll p-6 text-slate-700">
@@ -248,11 +231,11 @@ const TailorResume = () => {
         <Card>
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm text-slate-600 flex-1 min-w-[240px]">
-              {tailored
-                ? "Review each change below. Accepted changes go into your exported resume — nothing is invented from your resume."
+              {tailored && !outdated
+                ? "We keep your full resume and only apply the edits you approve below — nothing is removed or invented."
                 : checking
                 ? "Loading saved version…"
-                : "Rewrite this resume's wording to match the job — surfacing relevant experience you already have, inventing nothing."}
+                : "Suggest targeted edits to your existing resume for this job — same resume, sharper wording and keywords. Nothing invented."}
             </p>
 
             {resumes.length === 0 ? (
@@ -279,10 +262,10 @@ const TailorResume = () => {
                     </option>
                   ))}
                 </select>
-                {tailored ? (
+                {tailored && !outdated ? (
                   confirming ? (
                     <span className="inline-flex items-center gap-2 text-xs">
-                      <span className="text-gray-500">Regenerates and replaces this version.</span>
+                      <span className="text-gray-500">Regenerates and replaces these edits.</span>
                       <button
                         onClick={() => runTailor(true)}
                         disabled={running}
@@ -306,14 +289,14 @@ const TailorResume = () => {
                 ) : (
                   !checking && (
                     <button
-                      onClick={() => runTailor(false)}
+                      onClick={() => runTailor(!!outdated)}
                       disabled={running || !resumeId}
                       className="flex items-center gap-2 bg-gradient-to-r from-[#226bff] to-[#65adff] text-white px-4 py-1.5 rounded-lg text-sm disabled:opacity-60"
                     >
                       {running && (
                         <span className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin" />
                       )}
-                      {running ? "Tailoring…" : "Tailor my resume for this job"}
+                      {running ? "Tailoring…" : outdated ? "Re-generate" : "Tailor my resume for this job"}
                     </button>
                   )
                 )}
@@ -322,108 +305,61 @@ const TailorResume = () => {
           </div>
           {running && (
             <p className="text-sm text-gray-500 animate-pulse mt-4">
-              Rewriting your resume for this job… (about 5–15 seconds)
+              Finding edits for this job… (about 5–10 seconds)
             </p>
           )}
         </Card>
 
-        {tailored && (
+        {tailored && !outdated && (
           <>
-            <div className="mt-5 space-y-5">
-              {summaryChanged && (
+            <div className="mt-5">
+              {changes.length === 0 ? (
                 <Card>
-                  <h2 className="text-sm font-semibold mb-3">Summary</h2>
-                  <ChangeCard
-                    original={tailored.summary.original}
-                    tailored={tailored.summary.tailored}
-                    reason="Rewritten to lead with what this job values."
-                    keptOriginal={tailored.summary.kept_original}
-                    accepted={isAccepted("summary")}
-                    onToggle={(v) => toggle("summary", v)}
-                  />
+                  <p className="text-sm text-gray-500">
+                    No edits suggested — your resume already fits this job well.
+                  </p>
                 </Card>
-              )}
-
-              {(tailored.sections || []).map((s, si) => {
-                const changed = (s.bullets || []).filter((b) => b.tailored !== b.original);
-                return (
-                  <Card key={si}>
-                    <h2 className="text-sm font-semibold mb-3">{s.heading}</h2>
-                    {changed.length === 0 ? (
-                      <ul className="list-disc pl-5 space-y-1 text-sm text-slate-600">
-                        {(s.bullets || []).map((b, bi) => (
-                          <li key={bi}>{b.original}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="space-y-3">
-                        {(s.bullets || []).map((b, bi) =>
-                          b.tailored === b.original ? (
-                            <p key={bi} className="text-sm text-slate-600 pl-1">
-                              • {b.original}
-                            </p>
-                          ) : (
-                            <ChangeCard
-                              key={bi}
-                              original={b.original}
-                              tailored={b.tailored}
-                              reason={b.reason}
-                              keptOriginal={b.kept_original}
-                              accepted={isAccepted(`${si}:${bi}`)}
-                              onToggle={(v) => toggle(`${si}:${bi}`, v)}
-                            />
-                          )
-                        )}
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
-
-              {(tailored.skills?.tailored?.length > 0 || tailored.skills?.original?.length > 0) && (
+              ) : (
                 <Card>
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-semibold">Skills</h2>
-                    {skillsChanged && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => toggle("skills", true)}
-                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md border ${
-                            isAccepted("skills")
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : "text-gray-500 border-gray-200"
-                          }`}
-                        >
-                          <Check className="w-3.5 h-3.5" /> Accept
-                        </button>
-                        <button
-                          onClick={() => toggle("skills", false)}
-                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md border ${
-                            !isAccepted("skills")
-                              ? "bg-red-50 text-red-600 border-red-200"
-                              : "text-gray-500 border-gray-200"
-                          }`}
-                        >
-                          <X className="w-3.5 h-3.5" /> Reject
-                        </button>
-                      </div>
-                    )}
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h2 className="text-sm font-semibold">
+                      Suggested edits{" "}
+                      <span className="text-gray-400 font-normal">
+                        ({appliedCount} of {changes.length} applied)
+                      </span>
+                    </h2>
+                    <button
+                      onClick={() => setPreview((p) => !p)}
+                      className="flex items-center gap-1 text-sm text-[#4a7aff] hover:underline"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> {preview ? "Hide" : "Preview"} full resume
+                    </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(isAccepted("skills") ? tailored.skills.tailored : tailored.skills.original).map(
-                      (sk) => (
-                        <span
-                          key={sk}
-                          className="text-xs px-2.5 py-1 rounded-full bg-[#EEF4FF] text-[#4a7aff] border border-[#dbe6ff]"
-                        >
-                          {sk}
-                        </span>
-                      )
-                    )}
+                  <div className="space-y-3">
+                    {changes.map((c) => (
+                      <ChangeCard
+                        key={c.id}
+                        original={c.original}
+                        tailored={c.tailored}
+                        reason={c.reason}
+                        keptOriginal={c.kept_original}
+                        accepted={isAccepted(c.id)}
+                        onToggle={(v) => toggle(c.id, v)}
+                      />
+                    ))}
                   </div>
                 </Card>
               )}
             </div>
+
+            {preview && (
+              <Card className="mt-5">
+                <h2 className="text-sm font-semibold mb-3">Full resume preview (with applied edits)</h2>
+                <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
+                  {applyTailored(tailored, accepted)}
+                </pre>
+              </Card>
+            )}
 
             <div className="flex flex-wrap gap-2 mt-6">
               <button
