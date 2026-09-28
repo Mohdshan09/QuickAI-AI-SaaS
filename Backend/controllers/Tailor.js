@@ -19,7 +19,9 @@ const guardNumbers = (tailored, original, resumeDigits) => {
 
 const tailorAI = (resumeText, description, keywords) =>
   generateJSON({
-    maxTokens: 3000,
+    // A full-resume structured rewrite (every section, each bullet as
+    // original+tailored+reason) is large; too low a cap truncates the JSON.
+    maxTokens: 8000,
     validate: (o) => Array.isArray(o.sections),
     prompt: `Rewrite this resume so it is tailored to the job posting. Improve wording, reorder for relevance and surface experience that is already there — never invent anything.
 
@@ -42,6 +44,7 @@ Rules:
 - NEVER invent employers, job titles, dates, degrees, numbers or skills the resume doesn't show. Only rewrite, reorder and bring forward what is already there.
 - Use these job keywords ONLY where the resume already supports them: ${keywords.join(", ") || "(none)"}.
 - Keep each bullet to at most 2 lines and start it with a strong action verb.
+- Keep every "reason" under 12 words.
 - "original" fields MUST be copied verbatim from the resume. For content you don't change, set "tailored" equal to "original" and "reason" to "".
 - Include EVERY content section of the resume (experience, projects, education, etc.), not just the ones you change, so the result is a complete resume.
 
