@@ -1,21 +1,26 @@
 import sql from "../config/Neon.js";
 import { generateJSON } from "../config/ai.js";
 import { extractRequirements } from "./Match.js";
-import { parseResumeStructured, structuredCoverage } from "../lib/parseResume.js";
+import {
+  parseResumeStructured,
+  structuredCoverage,
+  RESUME_SCHEMA_VERSION,
+} from "../lib/parseResume.js";
 
-// Parse a resume into structured JSON once and cache it on the row. Returns null
-// (so the UI falls back to plain-text rendering) if parsing fails or drops too
-// much content — we never risk showing an incomplete resume.
-const ensureStructured = async (resume) => {
-  if (resume.structured) return resume.structured;
+// Parse a resume into structured JSON once and cache it on the row. Re-parses when
+// the cached copy predates the current schema (or on force). Returns null (so the
+// UI falls back to plain-text rendering) if parsing fails or drops too much content.
+const ensureStructured = async (resume, force = false) => {
+  const cached = resume.structured;
+  if (!force && cached && cached.schemaVersion === RESUME_SCHEMA_VERSION) return cached;
   try {
     const parsed = await parseResumeStructured(resume.text);
-    if (structuredCoverage(resume.text, parsed) < 0.6) return null;
+    if (structuredCoverage(resume.text, parsed) < 0.6) return cached || null;
     await sql`UPDATE resumes SET structured = ${parsed} WHERE id = ${resume.id}`;
     return parsed;
   } catch (e) {
     console.error("resume parse failed:", e.message);
-    return null;
+    return cached || null;
   }
 };
 
@@ -143,8 +148,9 @@ export const createTailor = async (req, res) => {
       if (changes.length >= 12) break;
     }
 
-    // Structured form for the deterministic renderer (parsed once, cached).
-    const structured = await ensureStructured(resume);
+    // Structured form for the deterministic renderer (parsed once, cached;
+    // re-parsed on force or when the schema has moved on).
+    const structured = await ensureStructured(resume, force);
 
     const data = {
       resumeText: resume.text, // the full, untouched resume — the base we edit

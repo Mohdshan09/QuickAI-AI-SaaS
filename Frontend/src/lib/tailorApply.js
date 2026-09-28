@@ -31,9 +31,17 @@ export function applyToStructured(structured, changes = [], accepted = {}) {
   if (typeof s.summary === "string") s.summary = rep(s.summary);
   (s.experience || []).forEach((e) => (e.bullets || []).forEach((b) => (b.text = rep(b.text))));
   (s.projects || []).forEach((p) => (p.bullets || []).forEach((b) => (b.text = rep(b.text))));
-  (s.education || []).forEach((e) => (e.text = rep(e.text)));
-  (s.certifications || []).forEach((c) => (c.text = rep(c.text)));
+  (s.education || []).forEach((e) => {
+    if (typeof e.text === "string") e.text = rep(e.text); // legacy shape
+    if (typeof e.details === "string") e.details = rep(e.details);
+  });
+  (s.certifications || []).forEach((c) => {
+    if (typeof c.text === "string") c.text = rep(c.text); // legacy shape
+  });
   (s.other || []).forEach((o) => (o.lines = (o.lines || []).map(rep)));
-  if (Array.isArray(s.skills)) s.skills = s.skills.map(rep);
+  // Grouped skills: replace matching items (rarely edited, but keep consistent).
+  (s.skills || []).forEach((g) => {
+    if (Array.isArray(g.items)) g.items = g.items.map(rep);
+  });
   return s;
 }
