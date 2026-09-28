@@ -1,6 +1,23 @@
 import sql from "../config/Neon.js";
 import { generateJSON } from "../config/ai.js";
 import { extractRequirements } from "./Match.js";
+import { parseResumeStructured, structuredCoverage } from "../lib/parseResume.js";
+
+// Parse a resume into structured JSON once and cache it on the row. Returns null
+// (so the UI falls back to plain-text rendering) if parsing fails or drops too
+// much content — we never risk showing an incomplete resume.
+const ensureStructured = async (resume) => {
+  if (resume.structured) return resume.structured;
+  try {
+    const parsed = await parseResumeStructured(resume.text);
+    if (structuredCoverage(resume.text, parsed) < 0.6) return null;
+    await sql`UPDATE resumes SET structured = ${parsed} WHERE id = ${resume.id}`;
+    return parsed;
+  } catch (e) {
+    console.error("resume parse failed:", e.message);
+    return null;
+  }
+};
 
 const notFound = (res) =>
   res.status(404).json({ success: false, message: "Not found." });
@@ -126,8 +143,12 @@ export const createTailor = async (req, res) => {
       if (changes.length >= 12) break;
     }
 
+    // Structured form for the deterministic renderer (parsed once, cached).
+    const structured = await ensureStructured(resume);
+
     const data = {
       resumeText: resume.text, // the full, untouched resume — the base we edit
+      structured, // parsed model for pro rendering (null → plain-text fallback)
       changes,
       accepted: {}, // empty = every change accepted by default
     };

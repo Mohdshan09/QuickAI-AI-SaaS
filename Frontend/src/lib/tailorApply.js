@@ -15,3 +15,25 @@ export function applyTailored(data, accepted = {}) {
 
 export const acceptedCount = (data, accepted = {}) =>
   (data?.changes || []).filter((c) => accepted[c.id] !== false).length;
+
+// Apply accepted edits onto the structured resume model (for the deterministic
+// renderer). Edits match by verbatim text, since the parser copies text as-is.
+export function applyToStructured(structured, changes = [], accepted = {}) {
+  if (!structured) return null;
+  const s = JSON.parse(JSON.stringify(structured));
+  const map = new Map(
+    (changes || [])
+      .filter((c) => accepted[c.id] !== false && c.original)
+      .map((c) => [c.original.trim(), c.tailored])
+  );
+  const rep = (t) => (t && map.has(String(t).trim()) ? map.get(String(t).trim()) : t);
+
+  if (typeof s.summary === "string") s.summary = rep(s.summary);
+  (s.experience || []).forEach((e) => (e.bullets || []).forEach((b) => (b.text = rep(b.text))));
+  (s.projects || []).forEach((p) => (p.bullets || []).forEach((b) => (b.text = rep(b.text))));
+  (s.education || []).forEach((e) => (e.text = rep(e.text)));
+  (s.certifications || []).forEach((c) => (c.text = rep(c.text)));
+  (s.other || []).forEach((o) => (o.lines = (o.lines || []).map(rep)));
+  if (Array.isArray(s.skills)) s.skills = s.skills.map(rep);
+  return s;
+}

@@ -5,7 +5,8 @@ import toast from "react-hot-toast";
 import { useCareerApi } from "../../lib/careerApi";
 import { Card } from "../../components/career/MatchVisuals";
 import { wordDiff } from "../../lib/wordDiff";
-import { applyTailored, acceptedCount } from "../../lib/tailorApply";
+import { applyTailored, acceptedCount, applyToStructured } from "../../lib/tailorApply";
+import ResumeDocument from "../../components/career/ResumeDocument";
 
 const DiffText = ({ parts, kind }) => (
   <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
@@ -355,9 +356,15 @@ const TailorResume = () => {
             {preview && (
               <Card className="mt-5">
                 <h2 className="text-sm font-semibold mb-3">Full resume preview (with applied edits)</h2>
-                <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
-                  {applyTailored(tailored, accepted)}
-                </pre>
+                {tailored.structured ? (
+                  <ResumeDocument
+                    resume={applyToStructured(tailored.structured, changes, accepted)}
+                  />
+                ) : (
+                  <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
+                    {applyTailored(tailored, accepted)}
+                  </pre>
+                )}
               </Card>
             )}
 

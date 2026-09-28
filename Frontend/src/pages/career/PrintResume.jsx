@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { useCareerApi } from "../../lib/careerApi";
-import { applyTailored } from "../../lib/tailorApply";
+import { applyTailored, applyToStructured } from "../../lib/tailorApply";
+import ResumeDocument from "../../components/career/ResumeDocument";
 
 // Phase 0 interim renderer: give the applied resume text real visual hierarchy
 // (name, contact, section headings, bullets) from plain text, until the Phase 1
@@ -90,6 +91,7 @@ const PrintResume = () => {
   const { isLoaded, isSignedIn } = useAuth();
 
   const [text, setText] = useState("");
+  const [doc, setDoc] = useState(null); // structured resume (preferred)
   const [state, setState] = useState("loading"); // loading | ready | empty | error | signedout
 
   useEffect(() => {
@@ -102,8 +104,15 @@ const PrintResume = () => {
       try {
         const data = await api.getTailor(id, resumeId);
         const t = data.tailored;
-        if (data.success && t && (t.resumeText || Array.isArray(t.changes))) {
-          setText(applyTailored(t, t.accepted || {}));
+        if (!data.success || !t) return setState("empty");
+        const structured = t.structured
+          ? applyToStructured(t.structured, t.changes, t.accepted || {})
+          : null;
+        if (structured) {
+          setDoc(structured);
+          setState("ready");
+        } else if (t.resumeText || Array.isArray(t.changes)) {
+          setText(applyTailored(t, t.accepted || {})); // plain-text fallback
           setState("ready");
         } else {
           setState("empty");
@@ -166,7 +175,7 @@ const PrintResume = () => {
         <button onClick={() => window.print()}>Print / Save as PDF</button>
       </div>
 
-      <div className="sheet">{body}</div>
+      <div className="sheet">{doc ? <ResumeDocument resume={doc} /> : body}</div>
     </>
   );
 };
