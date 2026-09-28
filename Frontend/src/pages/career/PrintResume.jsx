@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
 import { useCareerApi } from "../../lib/careerApi";
 
 // Clean, single-column resume built from the accepted tailored content.
@@ -10,11 +11,19 @@ const PrintResume = () => {
   const [params] = useSearchParams();
   const resumeId = params.get("resumeId");
   const api = useCareerApi();
+  const { isLoaded, isSignedIn } = useAuth();
 
   const [tailored, setTailored] = useState(null);
-  const [state, setState] = useState("loading"); // loading | ready | empty | error
+  const [state, setState] = useState("loading"); // loading | ready | empty | error | signedout
 
   useEffect(() => {
+    // This page opens in a fresh tab, so wait for Clerk to finish loading —
+    // otherwise getToken() is null and the request comes back unauthenticated.
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setState("signedout");
+      return;
+    }
     (async () => {
       try {
         const data = await api.getTailor(id, resumeId);
@@ -29,7 +38,7 @@ const PrintResume = () => {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, resumeId]);
+  }, [id, resumeId, isLoaded, isSignedIn]);
 
   // Once content is on screen, open the print dialog.
   useEffect(() => {
@@ -39,12 +48,24 @@ const PrintResume = () => {
     }
   }, [state]);
 
-  if (state === "loading")
+  if (state === "loading" || !isLoaded)
     return <div style={{ padding: 40, fontFamily: "system-ui" }}>Preparing your resume…</div>;
+  if (state === "signedout")
+    return (
+      <div style={{ padding: 40, fontFamily: "system-ui" }}>
+        Please sign in, then reopen this page.
+      </div>
+    );
+  if (state === "error")
+    return (
+      <div style={{ padding: 40, fontFamily: "system-ui" }}>
+        Couldn't load this resume. Please close this tab and try Export again.
+      </div>
+    );
   if (state !== "ready")
     return (
       <div style={{ padding: 40, fontFamily: "system-ui" }}>
-        No tailored resume found. Go back and tailor your resume first.
+        No tailored resume found for this resume. Go back and tailor it first.
       </div>
     );
 
