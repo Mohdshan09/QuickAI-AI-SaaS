@@ -30,19 +30,21 @@ const extractJSON = (text) => {
  * @returns {Promise<object>}
  * @throws  {Error}  "AI returned an invalid response" after one failed retry
  */
+const HARD_TOKEN_CAP = 16000;
+
 export const generateJSON = async ({
   prompt,
   validate,
   maxTokens = 2000,
   temperature = 0,
 }) => {
-  const ask = async () => {
+  const ask = async (tokens) => {
     const res = await AI.chat.completions.create({
       model: AI_MODEL,
       reasoning_effort: "none",
       response_format: { type: "json_object" },
       temperature,
-      max_tokens: maxTokens,
+      max_tokens: tokens,
       messages: [
         {
           role: "system",
@@ -52,16 +54,27 @@ export const generateJSON = async ({
         { role: "user", content: prompt },
       ],
     });
+    // The model ran out of room before finishing the JSON — flag it clearly
+    // instead of letting extractJSON throw a cryptic "Expected ',' or ']'".
+    if (res.choices?.[0]?.finish_reason === "length")
+      throw new Error("truncated: response exceeded max_tokens");
     const obj = extractJSON(res.choices?.[0]?.message?.content);
     if (validate && !validate(obj)) throw new Error("failed validation");
     return obj;
   };
 
   try {
-    return await ask();
+    return await ask(maxTokens);
   } catch (first) {
+    // If the first failure looks like truncation (explicit flag or a JSON parse
+    // error from a cut-off body), retry with a bigger ceiling. max_tokens is only
+    // a cap — billed per real output token — so raising it is free unless used.
+    const looksTruncated = /truncated|JSON|Expected|Unexpected|position \d/i.test(first.message);
+    const retryTokens = looksTruncated
+      ? Math.min(Math.round(maxTokens * 1.6), HARD_TOKEN_CAP)
+      : maxTokens;
     try {
-      return await ask();
+      return await ask(retryTokens);
     } catch (second) {
       console.error("generateJSON failed twice:", first.message, "|", second.message);
       throw new Error("AI returned an invalid response");

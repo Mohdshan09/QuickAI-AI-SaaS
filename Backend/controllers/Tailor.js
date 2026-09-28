@@ -28,13 +28,13 @@ const tailorAI = (resumeText, description, keywords) =>
 Return JSON:
 {
   "header": "The candidate's name and contact lines, copied VERBATIM from the top of the resume",
-  "summary": { "original": "existing summary or ''", "tailored": "rewritten summary aimed at this job" },
+  "summary": { "original": "existing summary or ''", "tailored": "rewritten summary (OMIT this field if unchanged)" },
   "sections": [
     { "heading": "Experience — Company / Role (use the resume's own wording)",
       "bullets": [
         { "original": "EXACT bullet copied from the resume",
-          "tailored": "rewritten bullet aimed at the job",
-          "reason": "why (e.g. 'Surfaces Node.js, which the job requires')" }
+          "tailored": "rewritten bullet aimed at the job (OMIT if unchanged)",
+          "reason": "why, under 12 words (OMIT if unchanged)" }
       ] }
   ],
   "skills": { "original": ["as listed in the resume"], "tailored": ["reordered / job-relevant, only skills the resume supports"] }
@@ -45,7 +45,8 @@ Rules:
 - Use these job keywords ONLY where the resume already supports them: ${keywords.join(", ") || "(none)"}.
 - Keep each bullet to at most 2 lines and start it with a strong action verb.
 - Keep every "reason" under 12 words.
-- "original" fields MUST be copied verbatim from the resume. For content you don't change, set "tailored" equal to "original" and "reason" to "".
+- "original" fields MUST be copied verbatim from the resume.
+- IMPORTANT — keep the response small: for any bullet or summary you DON'T change, output ONLY its "original" field and OMIT "tailored" and "reason" entirely. Only changed items include "tailored" (and "reason").
 - Include EVERY content section of the resume (experience, projects, education, etc.), not just the ones you change, so the result is a complete resume.
 
 Resume:
@@ -106,29 +107,29 @@ export const createTailor = async (req, res) => {
 
     const out = await tailorAI(resume.text, job.description, keywords);
 
-    // Deterministic guardrail: strip any invented numbers.
+    // Deterministic guardrail + normalize. An omitted/empty "tailored" (or one
+    // equal to the original) means the model left the line unchanged.
     const resumeDigits = new Set(digitRuns(resume.text));
-    const summaryGuard = guardNumbers(
-      out.summary?.tailored ?? "",
-      out.summary?.original ?? "",
-      resumeDigits
-    );
-    const summary = {
-      original: out.summary?.original ?? "",
-      tailored: summaryGuard.text,
-      kept_original: summaryGuard.kept_original,
+    const norm = (originalRaw, tailoredRaw, reasonRaw) => {
+      const original = originalRaw ?? "";
+      const t = (tailoredRaw ?? "").trim();
+      if (!t || t === original.trim()) {
+        return { original, tailored: original, reason: "", kept_original: false };
+      }
+      const g = guardNumbers(t, original, resumeDigits);
+      return {
+        original,
+        tailored: g.text,
+        reason: g.kept_original ? "" : reasonRaw ?? "",
+        kept_original: g.kept_original,
+      };
     };
-    const sections = (out.sections || []).map((s) => ({
-      heading: s.heading || "",
-      bullets: (s.bullets || []).map((b) => {
-        const g = guardNumbers(b.tailored ?? "", b.original ?? "", resumeDigits);
-        return {
-          original: b.original ?? "",
-          tailored: g.text,
-          reason: g.kept_original ? "" : b.reason ?? "",
-          kept_original: g.kept_original,
-        };
-      }),
+
+    const s = norm(out.summary?.original, out.summary?.tailored, "");
+    const summary = { original: s.original, tailored: s.tailored, kept_original: s.kept_original };
+    const sections = (out.sections || []).map((sec) => ({
+      heading: sec.heading || "",
+      bullets: (sec.bullets || []).map((b) => norm(b.original, b.tailored, b.reason)),
     }));
     const skills = {
       original: Array.isArray(out.skills?.original) ? out.skills.original : [],
