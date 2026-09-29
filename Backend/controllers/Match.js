@@ -1,5 +1,6 @@
 import sql from "../config/Neon.js";
 import { generateJSON } from "../config/ai.js";
+import { SERVICES } from "../config/aiServices.js";
 import { matchKeywords, coverage } from "../lib/keywords.js";
 
 // weights must sum to 1
@@ -17,8 +18,11 @@ const historyFor = (jobId) => sql`
 `;
 
 // --- AI call 1: pull the requirements out of the posting (cached per job) ---
-export const extractRequirements = (description) =>
+export const extractRequirements = (description, track = {}) =>
   generateJSON({
+    service: SERVICES.JD_ANALYSIS,
+    userId: track.userId,
+    meta: { jobId: track.jobId },
     maxTokens: 1500,
     validate: (o) => Array.isArray(o.keywords),
     prompt: `Extract the concrete requirements from this job posting.
@@ -45,8 +49,11 @@ ${description}
   });
 
 // --- AI call 2: judge the resume against the posting -----------------------
-const judgeResume = (resumeText, description) =>
+const judgeResume = (resumeText, description, track = {}) =>
   generateJSON({
+    service: SERVICES.MATCH_ANALYSIS,
+    userId: track.userId,
+    meta: { jobId: track.jobId, resumeId: track.resumeId },
     maxTokens: 2200,
     validate: (o) =>
       "experience_fit" in o && "role_relevance" in o && Array.isArray(o.weak_bullets),
@@ -135,9 +142,15 @@ export const createMatch = async (req, res) => {
       WHERE job_id = ${jobId} AND kind = 'match'
       ORDER BY created_at ASC LIMIT 1
     `;
-    const requirements = cached?.data?.requirements ?? (await extractRequirements(job.description));
+    const requirements =
+      cached?.data?.requirements ??
+      (await extractRequirements(job.description, { userId, jobId }));
 
-    const judged = await judgeResume(resume.text, job.description);
+    const judged = await judgeResume(resume.text, job.description, {
+      userId,
+      jobId,
+      resumeId: resume.id,
+    });
 
     // deterministic keyword coverage
     const required = requirements.keywords.filter((k) => k.importance === "required");

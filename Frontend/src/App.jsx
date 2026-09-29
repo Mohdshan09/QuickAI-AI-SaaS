@@ -18,6 +18,17 @@ import MatchReport from "./pages/career/MatchReport.jsx";
 import TailorResume from "./pages/career/TailorResume.jsx";
 import PrintResume from "./pages/career/PrintResume.jsx";
 import Resumes from "./pages/career/Resumes.jsx";
+import AdminLayout from "./pages/admin/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import UsageOverview from "./pages/admin/UsageOverview.jsx";
+import AdminUsers from "./pages/admin/Users.jsx";
+import UserDetail from "./pages/admin/UserDetail.jsx";
+import AiRequests from "./pages/admin/AiRequests.jsx";
+import AiRequestDetail from "./pages/admin/AiRequestDetail.jsx";
+import Services from "./pages/admin/Services.jsx";
+import Models from "./pages/admin/Models.jsx";
+import Errors from "./pages/admin/Errors.jsx";
+import Costs from "./pages/admin/Costs.jsx";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
@@ -43,6 +54,20 @@ const App = () => {
           <Route path="remove-obj" element={<RemoveObj />} />
 
           <Route path="community" element={<Community />} />
+        </Route>
+
+        {/* Admin module (role-gated in AdminLayout; backend enforces too) */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="usage" element={<UsageOverview />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="users/:id" element={<UserDetail />} />
+          <Route path="requests" element={<AiRequests />} />
+          <Route path="requests/:id" element={<AiRequestDetail />} />
+          <Route path="services" element={<Services />} />
+          <Route path="models" element={<Models />} />
+          <Route path="errors" element={<Errors />} />
+          <Route path="costs" element={<Costs />} />
         </Route>
       </Routes>
     </div>

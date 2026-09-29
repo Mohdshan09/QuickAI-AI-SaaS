@@ -7,6 +7,7 @@ import aiRouter from "./routes/AIroutes.js";
 import connectCloudinary from "./config/cloudinary.js";
 import userRouter from "./routes/User.js";
 import careerRouter from "./routes/Career.js";
+import adminRouter from "./routes/admin.js";
 
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(requireAuth());
 app.use("/api/ai",aiRouter);
 app.use("/api/user",userRouter)
 app.use("/api/career",careerRouter)
+app.use("/api/admin",adminRouter)
 
 // Turn upload errors (file too large, wrong type) into a clean 400
 app.use((err, req, res, next) => {

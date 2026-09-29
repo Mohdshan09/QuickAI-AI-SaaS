@@ -1,5 +1,6 @@
 import sql from "../config/Neon.js";
 import { generateJSON } from "../config/ai.js";
+import { SERVICES } from "../config/aiServices.js";
 import { extractRequirements } from "./Match.js";
 import {
   parseResumeStructured,
@@ -10,11 +11,14 @@ import {
 // Parse a resume into structured JSON once and cache it on the row. Re-parses when
 // the cached copy predates the current schema (or on force). Returns null (so the
 // UI falls back to plain-text rendering) if parsing fails or drops too much content.
-const ensureStructured = async (resume, force = false) => {
+const ensureStructured = async (resume, force = false, track = {}) => {
   const cached = resume.structured;
   if (!force && cached && cached.schemaVersion === RESUME_SCHEMA_VERSION) return cached;
   try {
-    const parsed = await parseResumeStructured(resume.text);
+    const parsed = await parseResumeStructured(resume.text, {
+      userId: track.userId,
+      resumeId: resume.id,
+    });
     if (structuredCoverage(resume.text, parsed) < 0.6) return cached || null;
     await sql`UPDATE resumes SET structured = ${parsed} WHERE id = ${resume.id}`;
     return parsed;
@@ -42,8 +46,11 @@ const guardNumbers = (tailored, original, resumeDigits) => {
 // The model suggests SMALL EDITS to the EXISTING resume — it does not rewrite or
 // restructure it. Each edit's "original" is a verbatim substring we can find and
 // replace, so the exported resume stays complete and keeps every section.
-const tailorAI = (resumeText, description, keywords) =>
+const tailorAI = (resumeText, description, keywords, track = {}) =>
   generateJSON({
+    service: SERVICES.RESUME_OPTIMIZATION,
+    userId: track.userId,
+    meta: { jobId: track.jobId, resumeId: track.resumeId },
     maxTokens: 3000,
     validate: (o) => Array.isArray(o.changes),
     prompt: `Tailor this resume to the job by suggesting a small set of targeted EDITS to the EXISTING resume. Do NOT rewrite or restructure the whole resume. Keep everything else exactly as it is.
@@ -118,10 +125,15 @@ export const createTailor = async (req, res) => {
       ORDER BY created_at ASC LIMIT 1
     `;
     const requirements =
-      cached?.data?.requirements ?? (await extractRequirements(job.description));
+      cached?.data?.requirements ??
+      (await extractRequirements(job.description, { userId, jobId }));
     const keywords = (requirements.keywords || []).map((k) => k.term);
 
-    const out = await tailorAI(resume.text, job.description, keywords);
+    const out = await tailorAI(resume.text, job.description, keywords, {
+      userId,
+      jobId,
+      resumeId: resume.id,
+    });
 
     // Keep only real, applicable edits: the "original" must be a verbatim
     // substring of the resume (so we can find & replace it and never show a
@@ -150,7 +162,7 @@ export const createTailor = async (req, res) => {
 
     // Structured form for the deterministic renderer (parsed once, cached;
     // re-parsed on force or when the schema has moved on).
-    const structured = await ensureStructured(resume, force);
+    const structured = await ensureStructured(resume, force, { userId });
 
     const data = {
       resumeText: resume.text, // the full, untouched resume — the base we edit

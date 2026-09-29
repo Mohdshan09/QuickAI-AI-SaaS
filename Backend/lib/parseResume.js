@@ -1,4 +1,5 @@
 import { generateJSON } from "../config/ai.js";
+import { SERVICES } from "../config/aiServices.js";
 
 export const RESUME_SCHEMA_VERSION = 2;
 
@@ -6,8 +7,12 @@ export const RESUME_SCHEMA_VERSION = 2;
 // and target edits against. Copies text VERBATIM — it must never invent or drop
 // content. URLs become {label,url} link objects; skills are grouped; unknown
 // sections go into `other` so nothing is lost.
-const parse = (resumeText) =>
+const parse = (resumeText, track = {}) =>
   generateJSON({
+    service: SERVICES.RESUME_PARSING,
+    userId: track.userId,
+    meta: { resumeId: track.resumeId },
+    schemaVersion: String(RESUME_SCHEMA_VERSION),
     maxTokens: 7000,
     validate: (o) => o && typeof o === "object" && ("experience" in o || "other" in o || "summary" in o),
     prompt: `Convert this resume into structured JSON. Copy text VERBATIM into the fields — do NOT rewrite, summarize, INVENT, or drop anything. Every line of the resume must appear somewhere in the output.
@@ -67,8 +72,8 @@ const guardSkills = (resumeText, skills) => {
     .filter((g) => g.items.length > 0);
 };
 
-export const parseResumeStructured = async (resumeText) => {
-  const s = await parse(resumeText);
+export const parseResumeStructured = async (resumeText, track = {}) => {
+  const s = await parse(resumeText, track);
   s.skills = guardSkills(resumeText, s.skills);
   s.schemaVersion = RESUME_SCHEMA_VERSION;
   return s;

@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { runChat } from "../lib/aiService.js";
+import { SERVICES } from "./aiServices.js";
 
 // Shared Gemini client (OpenAI-compatible endpoint)
 export const AI = new OpenAI({
@@ -22,8 +24,15 @@ const extractJSON = (text) => {
 /**
  * Ask Gemini for a JSON answer and return it parsed.
  *
+ * Routes through the central AI accounting layer (runChat) so every call is
+ * tracked on ai_requests. Callers must pass `service` and `userId` for
+ * attribution; `meta` carries correlation ids (resumeId/jobId).
+ *
  * @param {object}   opts
  * @param {string}   opts.prompt       - full instruction; describe the shape you want
+ * @param {string}   opts.service      - service key from config/aiServices.js SERVICES
+ * @param {string}   opts.userId       - Clerk user id for attribution
+ * @param {object}   [opts.meta]       - { resumeId, jobId } for correlation
  * @param {function} [opts.validate]   - (obj) => boolean; reject bad shapes, triggers one retry
  * @param {number}   [opts.maxTokens]  - default 2000
  * @param {number}   [opts.temperature]- default 0 for repeatable results
@@ -37,10 +46,17 @@ export const generateJSON = async ({
   validate,
   maxTokens = 2000,
   temperature = 0,
+  service = SERVICES.OTHER,
+  userId,
+  meta = {},
+  schemaVersion = null,
 }) => {
   const ask = async (tokens) => {
-    const res = await AI.chat.completions.create({
-      model: AI_MODEL,
+    const { res } = await runChat({
+      service,
+      userId,
+      meta,
+      schemaVersion,
       reasoning_effort: "none",
       response_format: { type: "json_object" },
       temperature,

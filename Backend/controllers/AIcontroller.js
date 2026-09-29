@@ -6,7 +6,8 @@ import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import FormData from "form-data";
 import fs from "fs";
-import { AI } from "../config/ai.js";
+import { runChat, recordUsage } from "../lib/aiService.js";
+import { SERVICES, PROVIDERS } from "../config/aiServices.js";
 
 import pdf from "pdf-parse/lib/pdf-parse.js";
 
@@ -43,9 +44,10 @@ export const GenArticle = async (req, res) => {
       });
     }
 
-    //Generate article using AI service
-    const response = await AI.chat.completions.create({
-      model: "gemini-2.5-flash",
+    //Generate article using AI service (tracked centrally)
+    const { res: response } = await runChat({
+      service: SERVICES.ARTICLE,
+      userId,
       reasoning_effort: "none",
       messages: [
         {
@@ -58,7 +60,6 @@ export const GenArticle = async (req, res) => {
     });
 
     const content = response.choices?.[0].message?.content;
-    console.log(JSON.stringify(response, null, 2));
 
     //SQL Query to store the article in DB
     await sql`
@@ -107,9 +108,10 @@ export const genBlogTitle = async (req, res) => {
       });
     }
 
-    //Generate blog title using AI service
-    const result = await AI.chat.completions.create({
-      model: "gemini-2.5-flash",
+    //Generate blog title using AI service (tracked centrally)
+    const { res: result } = await runChat({
+      service: SERVICES.BLOG_TITLE,
+      userId,
       reasoning_effort: "none",
       messages: [
         {
@@ -122,7 +124,6 @@ export const genBlogTitle = async (req, res) => {
     });
 
     const content = result.choices?.[0].message?.content;
-    console.log(JSON.stringify(result, null, 2));
 
     //SQL Query to store the article in DB
     await sql`
@@ -153,8 +154,9 @@ export const genBlogTitle = async (req, res) => {
 };
 
 export const genImage = async (req, res) => {
+  const startedAt = new Date();
+  const { userId } = req.auth();
   try {
-    const { userId } = req.auth();
     const { prompt, publish } = req.body;
 
     if (!isValidPrompt(prompt)) {
@@ -198,6 +200,14 @@ export const genImage = async (req, res) => {
   VALUES (${userId}, ${prompt}, ${secure_url}, 'image', ${publish ?? false})
 `;
 
+    await recordUsage({
+      userId,
+      service: SERVICES.IMAGE_GENERATION,
+      provider: PROVIDERS.CLIPDROP,
+      status: "success",
+      startedAt,
+    });
+
     if (plan != "premium") {
       await clerkClient.users.updateUserMetadata(userId, {
         privateMetadata: {
@@ -213,6 +223,15 @@ export const genImage = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    await recordUsage({
+      userId,
+      service: SERVICES.IMAGE_GENERATION,
+      provider: PROVIDERS.CLIPDROP,
+      status: "error",
+      startedAt,
+      errorCode: "PROVIDER_ERROR",
+      errorMessage: String(error.message || "").slice(0, 500),
+    });
     res.status(500).json({
       success: false,
       message: error.message,
@@ -221,8 +240,9 @@ export const genImage = async (req, res) => {
 };
 
 export const removeImageBG = async (req, res) => {
+  const startedAt = new Date();
+  const { userId } = req.auth();
   try {
-    const { userId } = req.auth();
     const image = req.file;
 
     const plan = req.plan;
@@ -252,6 +272,14 @@ export const removeImageBG = async (req, res) => {
   VALUES (${userId}, 'Remove background from image', ${secure_url}, 'image')
 `;
 
+    await recordUsage({
+      userId,
+      service: SERVICES.IMAGE_EDIT,
+      provider: PROVIDERS.CLOUDINARY,
+      status: "success",
+      startedAt,
+    });
+
     res.json({
       success: true,
       content: secure_url,
@@ -259,6 +287,15 @@ export const removeImageBG = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    await recordUsage({
+      userId,
+      service: SERVICES.IMAGE_EDIT,
+      provider: PROVIDERS.CLOUDINARY,
+      status: "error",
+      startedAt,
+      errorCode: "PROVIDER_ERROR",
+      errorMessage: String(error.message || "").slice(0, 500),
+    });
     res.status(500).json({
       success: false,
       message: error.message,
@@ -267,8 +304,9 @@ export const removeImageBG = async (req, res) => {
 };
 
 export const removeImageObject = async (req, res) => {
+  const startedAt = new Date();
+  const { userId } = req.auth();
   try {
-    const { userId } = req.auth();
     const { object } = req.body;
     const image = req.file;
 
@@ -306,6 +344,14 @@ export const removeImageObject = async (req, res) => {
   VALUES (${userId}, ${`Removed ${object} from image`}, ${imageUrl}, 'image')
 `;
 
+    await recordUsage({
+      userId,
+      service: SERVICES.IMAGE_EDIT,
+      provider: PROVIDERS.CLOUDINARY,
+      status: "success",
+      startedAt,
+    });
+
     res.json({
       success: true,
       content: imageUrl,
@@ -313,6 +359,15 @@ export const removeImageObject = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    await recordUsage({
+      userId,
+      service: SERVICES.IMAGE_EDIT,
+      provider: PROVIDERS.CLOUDINARY,
+      status: "error",
+      startedAt,
+      errorCode: "PROVIDER_ERROR",
+      errorMessage: String(error.message || "").slice(0, 500),
+    });
     res.status(500).json({
       success: false,
       message: error.message,
@@ -363,8 +418,9 @@ s
 Resume content:\n\n\n ${pdfData.text}
     `;
 
-    const result = await AI.chat.completions.create({
-      model: "gemini-2.5-flash",
+    const { res: result } = await runChat({
+      service: SERVICES.RESUME_REVIEW,
+      userId,
       messages: [
         {
           role: "user",
@@ -376,7 +432,6 @@ Resume content:\n\n\n ${pdfData.text}
     });
 
     const content = result.choices?.[0].message?.content;
-    console.log(JSON.stringify(result, null, 2));
 
     //SQL Query to store the article in DB
     await sql`
