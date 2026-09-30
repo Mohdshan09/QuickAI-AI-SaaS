@@ -31,7 +31,7 @@ const isText = (v, min, max) =>
 // ---- resumes ------------------------------------------------------------
 export const uploadResume = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const file = req.file;
     if (!file) return badRequest(res, "Please upload a PDF resume.");
 
@@ -84,7 +84,7 @@ export const uploadResume = async (req, res) => {
 
 export const listResumes = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const resumes = await sql`
       SELECT id, title, created_at
       FROM resumes WHERE user_id = ${userId}
@@ -98,7 +98,7 @@ export const listResumes = async (req, res) => {
 
 export const deleteResume = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const id = Number(req.params.id);
     const rows = await sql`
       DELETE FROM resumes WHERE id = ${id} AND user_id = ${userId} RETURNING id
@@ -113,7 +113,7 @@ export const deleteResume = async (req, res) => {
 // Create a resume from plain text (used by "Save & re-check" after tailoring).
 export const createResumeFromText = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const title = isText(req.body.title, 1, 120) ? req.body.title.trim() : "Tailored resume";
     const text = typeof req.body.text === "string" ? req.body.text.trim() : "";
 
@@ -148,7 +148,7 @@ export const createResumeFromText = async (req, res) => {
 // ---- jobs ---------------------------------------------------------------
 export const createJob = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const { company, role, description, url, resumeId } = req.body;
 
     if (!isText(company, 1, 120)) return badRequest(res, "Company is required (max 120 chars).");
@@ -193,7 +193,7 @@ export const createJob = async (req, res) => {
 
 export const listJobs = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     // one query: each job with its latest match score and which output kinds exist
     const jobs = await sql`
       SELECT j.id, j.company, j.role, j.status, j.url, j.resume_id,
@@ -222,7 +222,7 @@ export const listJobs = async (req, res) => {
 
 export const getJob = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const id = Number(req.params.id);
     const [job] = await sql`
       SELECT * FROM jobs WHERE id = ${id} AND user_id = ${userId}
@@ -253,7 +253,7 @@ export const getJob = async (req, res) => {
 
 export const updateJob = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const id = Number(req.params.id);
     const [job] = await sql`
       SELECT * FROM jobs WHERE id = ${id} AND user_id = ${userId}
@@ -306,7 +306,7 @@ export const updateJob = async (req, res) => {
 
 export const deleteJob = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const id = Number(req.params.id);
     const rows = await sql`
       DELETE FROM jobs WHERE id = ${id} AND user_id = ${userId} RETURNING id

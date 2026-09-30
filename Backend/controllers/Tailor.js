@@ -85,7 +85,7 @@ ${description}
 
 export const createTailor = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const jobId = Number(req.params.id);
     const { resumeId, force } = req.body;
 
@@ -187,7 +187,7 @@ export const createTailor = async (req, res) => {
 // Read the saved tailored result for a (job, resume) pair — no AI, no limit.
 export const getTailor = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const jobId = Number(req.params.id);
     const resumeId = Number(req.query.resumeId);
 
@@ -218,7 +218,7 @@ export const getTailor = async (req, res) => {
 // Toggle one bullet's accept/reject, stored in the tailored output's data.accepted.
 export const setTailorAccept = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const jobId = Number(req.params.id);
     const { resumeId, key, accepted } = req.body;
 

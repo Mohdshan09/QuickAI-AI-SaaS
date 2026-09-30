@@ -2,7 +2,7 @@ import sql from "../config/Neon.js";
 
 export const getUserCreations = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
 
     const creations = await sql`SELECT*FROM creations 
         WHERE user_id = ${userId}
@@ -42,7 +42,7 @@ export const getPublishCreations = async (req, res) => {
 
 export const toggleLikesCreations = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const { id } = req.body;
 
     const [creations] = await sql`SELECT*FROM creations 

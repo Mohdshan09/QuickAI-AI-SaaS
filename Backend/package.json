@@ -8,11 +8,14 @@
     "server": "nodemon server.js",
     "start": "node server.js",
     "migrate": "node scripts/migrate.js",
-    "backfill:users": "node scripts/backfillUsers.js"
+    "backfill:users": "node scripts/backfillUsers.js",
+    "backfill:wallets": "node scripts/backfillWallets.js",
+    "test": "node --test"
   },
   "author": "Mohammad Shan",
   "license": "ISC",
   "dependencies": {
+    "@clerk/backend": "^2.9.4",
     "@clerk/express": "^1.7.24",
     "@google/generative-ai": "^0.24.1",
     "@neondatabase/serverless": "^1.0.1",

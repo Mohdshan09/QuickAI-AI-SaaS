@@ -11,6 +11,7 @@ import {
 } from "../controllers/admin/aiRequests.js";
 import { getCosts } from "../controllers/admin/analytics.js";
 import { getMe } from "../controllers/admin/me.js";
+import { adjustUserCredits } from "../controllers/admin/credits.js";
 
 const adminRouter = express.Router();
 
@@ -25,6 +26,9 @@ adminRouter.get("/usage/overview", requireAdmin("view_usage"), getUsageOverview)
 
 adminRouter.get("/users", requireAdmin("view_users"), listUsers);
 adminRouter.get("/users/:id", requireAdmin("view_users"), getUserProfile);
+
+// Credit adjustment foundation (Phase 2, spec §23). Write action -> manage_users.
+adminRouter.post("/users/:id/credits", requireAdmin("manage_users"), adjustUserCredits);
 
 adminRouter.get("/ai/requests", requireAdmin("view_requests"), listRequests);
 adminRouter.get("/ai/requests/:id", requireAdmin("view_requests"), getRequest);

@@ -99,7 +99,7 @@ ${description}
 
 export const createMatch = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const jobId = Number(req.params.id);
     const { resumeId, force } = req.body;
 
@@ -330,7 +330,7 @@ export const createMatch = async (req, res) => {
 // regenerating it every time.
 export const getMatch = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const jobId = Number(req.params.id);
     const resumeId = Number(req.query.resumeId);
 
@@ -361,7 +361,7 @@ export const getMatch = async (req, res) => {
 // Toggle one improvement-plan item's completion, stored in the match's data.
 export const setMatchProgress = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.user.id;
     const jobId = Number(req.params.id);
     const { resumeId, itemId, done } = req.body;
 
