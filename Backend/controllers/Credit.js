@@ -1,4 +1,4 @@
-import { ensureWallet, getBalance, listTransactions } from "../services/creditService.js";
+import { ensureWallet, getWallet, listTransactions } from "../services/creditService.js";
 import { parseList } from "../lib/adminQuery.js";
 import { CreditError } from "../lib/creditError.js";
 
@@ -17,8 +17,9 @@ const sendError = (res, error) => {
 export const getCredits = async (req, res) => {
   try {
     await ensureWallet(req.user.id); // safe: idempotent, initial grant happens once
-    const balance = await getBalance(req.user.id);
-    res.json({ success: true, balance });
+    const wallet = await getWallet(req.user.id);
+    // Flat `balance` kept for back-compat; lifetime counters added for Phase 3 (§38).
+    res.json({ success: true, balance: wallet.balance, ...wallet });
   } catch (error) {
     sendError(res, error);
   }

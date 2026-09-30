@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCareerApi, scoreColor } from "../../lib/careerApi";
+import { useCredits, AI_ACTION_COSTS, isInsufficientCredits } from "../../lib/useCredits";
 import { Card, ScoreRing, FactorBar } from "../../components/career/MatchVisuals";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "");
@@ -97,6 +98,7 @@ const MatchReport = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const api = useCareerApi();
+  const { balance, refresh: refreshCredits } = useCredits();
 
   const [job, setJob] = useState(null);
   const [resumes, setResumes] = useState([]);
@@ -183,12 +185,22 @@ const MatchReport = () => {
         setAnalyzedAt(data.analyzedAt);
         setHistory(data.history);
         toast.success(`Match: ${data.match.score}%`);
+        refreshCredits(); // pull the authoritative balance after the charge
       } else {
         toast.error(data.message);
       }
     } catch (err) {
-      if (err.response?.status === 403) setLimitReached(true);
-      toast.error(err.response?.data?.message || err.message);
+      if (isInsufficientCredits(err)) {
+        const { required, available } = err.response.data;
+        setLimitReached(true);
+        toast.error(
+          required != null
+            ? `Not enough credits: this uses ${required}, you have ${available}.`
+            : "You do not have enough credits for this action."
+        );
+      } else {
+        toast.error(err.response?.data?.message || err.message);
+      }
     } finally {
       setRunning(false);
     }
@@ -272,11 +284,14 @@ const MatchReport = () => {
               ) : limitReached ? (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                   <p className="text-sm text-amber-700">
-                    You've used your 4 free match checks.{" "}
-                    <a href="/#plans" className="font-medium text-[#4a7aff] hover:underline">
-                      Upgrade for unlimited
-                    </a>
-                    .
+                    Not enough credits to run a match
+                    {balance != null ? ` (you have ${balance}, this uses ${AI_ACTION_COSTS.match})` : ""}.{" "}
+                    <button
+                      onClick={() => setLimitReached(false)}
+                      className="font-medium text-[#4a7aff] hover:underline"
+                    >
+                      Dismiss
+                    </button>
                   </p>
                 </div>
               ) : (
@@ -307,7 +322,7 @@ const MatchReport = () => {
                       </button>
                       {confirming ? (
                         <span className="inline-flex items-center gap-2 text-xs">
-                          <span className="text-gray-500">Runs a new check, counts toward your limit.</span>
+                          <span className="text-gray-500">Runs a new check · uses {AI_ACTION_COSTS.match} credits.</span>
                           <button
                             onClick={() => runMatch(true)}
                             disabled={running}
@@ -335,16 +350,21 @@ const MatchReport = () => {
                     </>
                   ) : (
                     !checking && (
-                      <button
-                        onClick={() => runMatch(false)}
-                        disabled={running || !resumeId}
-                        className="flex items-center gap-2 bg-gradient-to-r from-[#226bff] to-[#65adff] text-white px-4 py-1.5 rounded-lg text-sm disabled:opacity-60"
-                      >
-                        {running && (
-                          <span className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin" />
+                      <span className="inline-flex items-center gap-2">
+                        {balance != null && (
+                          <span className="text-xs text-gray-500">Balance: {balance} credits</span>
                         )}
-                        {running ? "Checking…" : "Check my match"}
-                      </button>
+                        <button
+                          onClick={() => runMatch(false)}
+                          disabled={running || !resumeId}
+                          className="flex items-center gap-2 bg-gradient-to-r from-[#226bff] to-[#65adff] text-white px-4 py-1.5 rounded-lg text-sm disabled:opacity-60"
+                        >
+                          {running && (
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin" />
+                          )}
+                          {running ? "Checking…" : `Check my match · ${AI_ACTION_COSTS.match} credits`}
+                        </button>
+                      </span>
                     )
                   )}
                 </div>

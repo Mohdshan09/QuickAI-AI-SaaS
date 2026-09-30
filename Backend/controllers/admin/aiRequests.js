@@ -27,7 +27,7 @@ export const listRequests = async (req, res) => {
     };
     if (req.query.service) eq("r.service", req.query.service);
     if (req.query.model) eq("r.model", req.query.model);
-    if (req.query.status === "success" || req.query.status === "error") eq("r.status", req.query.status);
+    if (["success", "error", "refunded"].includes(req.query.status)) eq("r.status", req.query.status);
     if (req.query.userId) eq("r.user_id", req.query.userId);
     if (req.query.from) {
       conds.push(`r.created_at >= $${i++}`);
@@ -46,7 +46,8 @@ export const listRequests = async (req, res) => {
 
     const rows = await sql.query(
       `SELECT r.id, r.user_id, u.email, r.service, r.provider, r.model, r.status,
-              r.total_tokens, r.total_cost, r.duration_ms, r.error_code, r.created_at
+              r.total_tokens, r.total_cost, r.credits_consumed, r.reference_id,
+              r.duration_ms, r.error_code, r.created_at
        FROM ai_requests r LEFT JOIN users u ON u.id = r.user_id
        ${where}
        ORDER BY ${SORT[sort]} ${order} NULLS LAST

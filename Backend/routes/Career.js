@@ -2,7 +2,6 @@ import express from "express";
 import { auth } from "../middlewares/auth.js";
 import { aiRateLimit } from "../middlewares/rateLimit.js";
 import { uploadPdf } from "../config/multer.js";
-import { planLimit } from "../middlewares/planLimit.js";
 import {
   uploadResume,
   createResumeFromText,
@@ -32,14 +31,15 @@ careerRouter.get("/jobs/:id", auth, getJob);
 careerRouter.patch("/jobs/:id", auth, updateJob);
 careerRouter.delete("/jobs/:id", auth, deleteJob);
 
-// AI features
+// AI features — credit-gated (Phase 3). Credits are the single gate here; the
+// old planLimit/premium gates were removed (entitlement returns in Phase 4).
 careerRouter.get("/jobs/:id/match", auth, getMatch);
-careerRouter.post("/jobs/:id/match", aiRateLimit, auth, planLimit("match", 4), createMatch);
+careerRouter.post("/jobs/:id/match", aiRateLimit, auth, createMatch);
 careerRouter.patch("/jobs/:id/match/progress", auth, setMatchProgress);
 
-// tailored resume (premium only)
+// tailored resume
 careerRouter.get("/jobs/:id/tailor", auth, getTailor);
-careerRouter.post("/jobs/:id/tailor", aiRateLimit, auth, planLimit("tailored", 0), createTailor);
+careerRouter.post("/jobs/:id/tailor", aiRateLimit, auth, createTailor);
 careerRouter.patch("/jobs/:id/tailor/accept", auth, setTailorAccept);
 
 export default careerRouter;

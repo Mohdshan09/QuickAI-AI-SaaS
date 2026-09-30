@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, X, Printer, RefreshCw, Sparkles, Lock, Wand2, Eye } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCareerApi } from "../../lib/careerApi";
+import { useCredits, AI_ACTION_COSTS, isInsufficientCredits } from "../../lib/useCredits";
 import { Card } from "../../components/career/MatchVisuals";
 import { wordDiff } from "../../lib/wordDiff";
 import { applyTailored, acceptedCount, applyToStructured } from "../../lib/tailorApply";
@@ -82,6 +83,7 @@ const TailorResume = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const api = useCareerApi();
+  const { balance, refresh: refreshCredits } = useCredits();
 
   const [job, setJob] = useState(null);
   const [resumes, setResumes] = useState([]);
@@ -94,7 +96,7 @@ const TailorResume = () => {
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
-  const [premiumBlocked, setPremiumBlocked] = useState(false);
+  const [creditBlocked, setCreditBlocked] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -153,13 +155,24 @@ const TailorResume = () => {
       if (data.success) {
         setTailored(data.tailored);
         setAccepted(data.tailored.accepted || {});
+        setCreditBlocked(false);
         toast.success("Resume tailored");
+        refreshCredits(); // pull the authoritative balance after the charge
       } else {
         toast.error(data.message);
       }
     } catch (err) {
-      if (err.response?.status === 403) setPremiumBlocked(true);
-      toast.error(err.response?.data?.message || err.message);
+      if (isInsufficientCredits(err)) {
+        const { required, available } = err.response.data;
+        setCreditBlocked(true);
+        toast.error(
+          required != null
+            ? `Not enough credits: this uses ${required}, you have ${available}.`
+            : "You do not have enough credits for this action."
+        );
+      } else {
+        toast.error(err.response?.data?.message || err.message);
+      }
     } finally {
       setRunning(false);
     }
@@ -241,13 +254,17 @@ const TailorResume = () => {
 
             {resumes.length === 0 ? (
               <p className="text-sm text-gray-500">Upload a resume first.</p>
-            ) : premiumBlocked ? (
+            ) : creditBlocked ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
                 <p className="text-sm text-amber-700 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5" /> Tailoring is a premium feature.{" "}
-                  <a href="/#plans" className="font-medium text-[#4a7aff] hover:underline">
-                    Upgrade
-                  </a>
+                  <Lock className="w-3.5 h-3.5" /> Not enough credits to tailor
+                  {balance != null ? ` (you have ${balance}, this uses ${AI_ACTION_COSTS.tailor})` : ""}.
+                  <button
+                    onClick={() => setCreditBlocked(false)}
+                    className="font-medium text-[#4a7aff] hover:underline"
+                  >
+                    Dismiss
+                  </button>
                 </p>
               </div>
             ) : (
@@ -289,6 +306,10 @@ const TailorResume = () => {
                   )
                 ) : (
                   !checking && (
+                    <span className="inline-flex items-center gap-2">
+                      {balance != null && (
+                        <span className="text-xs text-gray-500">Balance: {balance} credits</span>
+                      )}
                     <button
                       onClick={() => runTailor(!!outdated)}
                       disabled={running || !resumeId}
@@ -297,8 +318,11 @@ const TailorResume = () => {
                       {running && (
                         <span className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin" />
                       )}
-                      {running ? "Tailoring…" : outdated ? "Re-generate" : "Tailor my resume for this job"}
+                      {running
+                        ? "Tailoring…"
+                        : `${outdated ? "Re-generate" : "Tailor my resume"} · ${AI_ACTION_COSTS.tailor} credits`}
                     </button>
+                    </span>
                   )
                 )}
               </div>

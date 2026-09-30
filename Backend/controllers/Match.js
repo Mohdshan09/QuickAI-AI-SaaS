@@ -2,6 +2,8 @@ import sql from "../config/Neon.js";
 import { generateJSON } from "../config/ai.js";
 import { SERVICES } from "../config/aiServices.js";
 import { matchKeywords, coverage } from "../lib/keywords.js";
+import { executeWithCredits } from "../services/aiCreditService.js";
+import { sendApiError } from "../lib/apiError.js";
 
 // weights must sum to 1
 const WEIGHTS = { required: 0.45, nice: 0.15, experience: 0.2, relevance: 0.2 };
@@ -22,7 +24,7 @@ export const extractRequirements = (description, track = {}) =>
   generateJSON({
     service: SERVICES.JD_ANALYSIS,
     userId: track.userId,
-    meta: { jobId: track.jobId },
+    meta: { jobId: track.jobId, referenceId: track.referenceId },
     maxTokens: 1500,
     validate: (o) => Array.isArray(o.keywords),
     prompt: `Extract the concrete requirements from this job posting.
@@ -53,7 +55,7 @@ const judgeResume = (resumeText, description, track = {}) =>
   generateJSON({
     service: SERVICES.MATCH_ANALYSIS,
     userId: track.userId,
-    meta: { jobId: track.jobId, resumeId: track.resumeId },
+    meta: { jobId: track.jobId, resumeId: track.resumeId, referenceId: track.referenceId },
     maxTokens: 2200,
     validate: (o) =>
       "experience_fit" in o && "role_relevance" in o && Array.isArray(o.weak_bullets),
@@ -142,15 +144,32 @@ export const createMatch = async (req, res) => {
       WHERE job_id = ${jobId} AND kind = 'match'
       ORDER BY created_at ASC LIMIT 1
     `;
-    const requirements =
-      cached?.data?.requirements ??
-      (await extractRequirements(job.description, { userId, jobId }));
 
-    const judged = await judgeResume(resume.text, job.description, {
-      userId,
-      jobId,
-      resumeId: resume.id,
-    });
+    // Credit-gated: pre-charge the match cost, run the AI, refund on failure.
+    // The cache-hit path above already returned free (no AI call, no charge).
+    let requirements, judged;
+    try {
+      const { result } = await executeWithCredits({
+        userId,
+        service: SERVICES.MATCH_ANALYSIS,
+        idempotencyKey: req.get("Idempotency-Key") || null,
+        execute: async ({ referenceId }) => {
+          const reqs =
+            cached?.data?.requirements ??
+            (await extractRequirements(job.description, { userId, jobId, referenceId }));
+          const jd = await judgeResume(resume.text, job.description, {
+            userId,
+            jobId,
+            resumeId: resume.id,
+            referenceId,
+          });
+          return { requirements: reqs, judged: jd };
+        },
+      });
+      ({ requirements, judged } = result);
+    } catch (error) {
+      return sendApiError(res, error);
+    }
 
     // deterministic keyword coverage
     const required = requirements.keywords.filter((k) => k.importance === "required");

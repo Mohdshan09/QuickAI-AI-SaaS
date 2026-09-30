@@ -46,12 +46,13 @@ const shapeTx = (row) =>
     type: row.type,
     amount: row.amount,
     balanceAfter: row.balance_after,
+    referenceId: row.reference_id ?? null,
     createdAt: row.created_at,
   };
 
 const getExistingTx = async (userId, type, referenceId) => {
   const [row] = await sql`
-    SELECT id, type, amount, balance_after, created_at
+    SELECT id, type, amount, balance_after, reference_id, created_at
     FROM credit_transactions
     WHERE user_id = ${userId} AND type = ${type} AND reference_id = ${referenceId}
     LIMIT 1
@@ -110,7 +111,7 @@ const applyCredit = ({ userId, amount, type, referenceId = null, metadata = null
         SELECT ${crypto.randomUUID()}, ${userId}, ${type}, ${amount}, upsert.balance,
                ${referenceId}, ${meta}::jsonb, NOW()
         FROM upsert
-        RETURNING id, type, amount, balance_after, created_at
+        RETURNING id, type, amount, balance_after, reference_id, created_at
       `;
       return shapeTx(row);
     },
@@ -141,7 +142,7 @@ const applyDebit = ({ userId, amount, type, referenceId = null, metadata = null 
         SELECT ${crypto.randomUUID()}, ${userId}, ${type}, ${-amount}, upd.balance,
                ${referenceId}, ${meta}::jsonb, NOW()
         FROM upd
-        RETURNING id, type, amount, balance_after, created_at
+        RETURNING id, type, amount, balance_after, reference_id, created_at
       `;
       if (!row) throw new CreditError("INSUFFICIENT_CREDITS", "Not enough credits.");
       return shapeTx(row);
@@ -156,6 +157,20 @@ const applyDebit = ({ userId, amount, type, referenceId = null, metadata = null 
 export const getBalance = async (userId) => {
   const [row] = await sql`SELECT balance FROM credit_wallets WHERE user_id = ${userId}`;
   return row?.balance ?? 0;
+};
+
+/** Read-only wallet summary: balance + lifetime counters (0s if no wallet yet). */
+export const getWallet = async (userId) => {
+  const [row] = await sql`
+    SELECT balance, lifetime_granted, lifetime_purchased, lifetime_used
+    FROM credit_wallets WHERE user_id = ${userId}
+  `;
+  return {
+    balance: row?.balance ?? 0,
+    lifetimeGranted: row?.lifetime_granted ?? 0,
+    lifetimePurchased: row?.lifetime_purchased ?? 0,
+    lifetimeUsed: row?.lifetime_used ?? 0,
+  };
 };
 
 /**
@@ -234,7 +249,7 @@ export const listTransactions = async (userId, { page = 1, limit = 20 } = {}) =>
     SELECT count(*)::int AS count FROM credit_transactions WHERE user_id = ${userId}
   `;
   const rows = await sql`
-    SELECT id, type, amount, balance_after, created_at
+    SELECT id, type, amount, balance_after, reference_id, created_at
     FROM credit_transactions
     WHERE user_id = ${userId}
     ORDER BY created_at DESC

@@ -2,6 +2,8 @@ import sql from "../config/Neon.js";
 import { generateJSON } from "../config/ai.js";
 import { SERVICES } from "../config/aiServices.js";
 import { extractRequirements } from "./Match.js";
+import { executeWithCredits } from "../services/aiCreditService.js";
+import { sendApiError } from "../lib/apiError.js";
 import {
   parseResumeStructured,
   structuredCoverage,
@@ -50,7 +52,7 @@ const tailorAI = (resumeText, description, keywords, track = {}) =>
   generateJSON({
     service: SERVICES.RESUME_OPTIMIZATION,
     userId: track.userId,
-    meta: { jobId: track.jobId, resumeId: track.resumeId },
+    meta: { jobId: track.jobId, resumeId: track.resumeId, referenceId: track.referenceId },
     maxTokens: 3000,
     validate: (o) => Array.isArray(o.changes),
     prompt: `Tailor this resume to the job by suggesting a small set of targeted EDITS to the EXISTING resume. Do NOT rewrite or restructure the whole resume. Keep everything else exactly as it is.
@@ -124,16 +126,31 @@ export const createTailor = async (req, res) => {
       WHERE job_id = ${jobId} AND kind = 'match'
       ORDER BY created_at ASC LIMIT 1
     `;
-    const requirements =
-      cached?.data?.requirements ??
-      (await extractRequirements(job.description, { userId, jobId }));
-    const keywords = (requirements.keywords || []).map((k) => k.term);
-
-    const out = await tailorAI(resume.text, job.description, keywords, {
-      userId,
-      jobId,
-      resumeId: resume.id,
-    });
+    // Credit-gated resume optimization: pre-charge, run AI, refund on failure.
+    // The cache-hit path above already returned free (no AI call, no charge).
+    let out;
+    try {
+      const { result } = await executeWithCredits({
+        userId,
+        service: SERVICES.RESUME_OPTIMIZATION,
+        idempotencyKey: req.get("Idempotency-Key") || null,
+        execute: async ({ referenceId }) => {
+          const requirements =
+            cached?.data?.requirements ??
+            (await extractRequirements(job.description, { userId, jobId, referenceId }));
+          const keywords = (requirements.keywords || []).map((k) => k.term);
+          return tailorAI(resume.text, job.description, keywords, {
+            userId,
+            jobId,
+            resumeId: resume.id,
+            referenceId,
+          });
+        },
+      });
+      out = result;
+    } catch (error) {
+      return sendApiError(res, error);
+    }
 
     // Keep only real, applicable edits: the "original" must be a verbatim
     // substring of the resume (so we can find & replace it and never show a

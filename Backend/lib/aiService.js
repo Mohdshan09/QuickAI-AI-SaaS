@@ -98,6 +98,7 @@ export const recordUsage = async ({
   errorMessage = null,
   resumeId = null,
   jobId = null,
+  referenceId = null,
 } = {}) => {
   try {
     const durationMs =
@@ -109,14 +110,14 @@ export const recordUsage = async ({
         input_tokens, output_tokens, total_tokens,
         input_cost, output_cost, total_cost, input_price, output_price,
         prompt_version, analysis_version, schema_version,
-        error_code, error_message, resume_id, job_id
+        error_code, error_message, resume_id, job_id, reference_id
       ) VALUES (
         ${requestId}, ${userId ?? "unknown"}, ${service}, ${provider}, ${model}, ${status},
         ${startedAt ?? new Date()}, ${completedAt}, ${durationMs},
         ${inputTokens}, ${outputTokens}, ${totalTokens},
         ${inputCost}, ${outputCost}, ${totalCost}, ${inputPrice}, ${outputPrice},
         ${promptVersion}, ${analysisVersion}, ${schemaVersion},
-        ${errorCode}, ${errorMessage}, ${resumeId}, ${jobId}
+        ${errorCode}, ${errorMessage}, ${resumeId}, ${jobId}, ${referenceId}
       )
     `;
   } catch (e) {
@@ -178,6 +179,7 @@ export const runChat = async ({
       schemaVersion,
       resumeId: meta.resumeId ?? null,
       jobId: meta.jobId ?? null,
+      referenceId: meta.referenceId ?? null,
     });
 
     return { res, requestId, usage: { inputTokens, outputTokens, totalTokens }, cost };
@@ -197,6 +199,7 @@ export const runChat = async ({
       schemaVersion,
       resumeId: meta.resumeId ?? null,
       jobId: meta.jobId ?? null,
+      referenceId: meta.referenceId ?? null,
     });
     throw err;
   }

@@ -24,9 +24,11 @@ export const getDashboard = async (_req, res) => {
         count(*)::int                                    AS total_requests,
         count(*) FILTER (WHERE status = 'success')::int  AS successful,
         count(*) FILTER (WHERE status = 'error')::int    AS failed,
+        count(*) FILTER (WHERE status = 'refunded')::int AS refunded,
         coalesce(sum(total_tokens), 0)::bigint           AS total_tokens,
         coalesce(sum(input_tokens), 0)::bigint           AS input_tokens,
         coalesce(sum(output_tokens), 0)::bigint          AS output_tokens,
+        coalesce(sum(credits_consumed), 0)::int          AS credits_consumed,
         count(DISTINCT user_id)::int                     AS unique_users
       FROM ai_requests
     `;
@@ -89,10 +91,13 @@ export const getDashboard = async (_req, res) => {
           totalRequests: usage.total_requests,
           successful: usage.successful,
           failed: usage.failed,
+          refunded: usage.refunded,
           totalTokens: Number(usage.total_tokens),
           inputTokens: Number(usage.input_tokens),
           outputTokens: Number(usage.output_tokens),
+          creditsConsumed: usage.credits_consumed,
           avgTokensPerRequest: div(usage.total_tokens, usage.total_requests),
+          avgCreditsPerRequest: div(usage.credits_consumed, usage.total_requests),
           successRate: div(usage.successful, usage.total_requests),
         },
         cost: {
