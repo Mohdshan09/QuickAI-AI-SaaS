@@ -15,6 +15,7 @@
     "axios": "^1.11.0",
     "form-data": "^4.0.4",
     "lucide-react": "^0.540.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",

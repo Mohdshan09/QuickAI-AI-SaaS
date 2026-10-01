@@ -13,6 +13,21 @@ import { getCosts } from "../controllers/admin/analytics.js";
 import { getMe } from "../controllers/admin/me.js";
 import { adjustUserCredits } from "../controllers/admin/credits.js";
 import { assignUserPlan } from "../controllers/admin/plan.js";
+import { manageUserSubscription } from "../controllers/admin/subscriptions.js";
+import {
+  listCreditPacks,
+  createCreditPack,
+  updateCreditPack,
+  disableCreditPack,
+} from "../controllers/admin/creditPacks.js";
+import { managePurchase, getAdminPurchase } from "../controllers/admin/creditPurchases.js";
+import {
+  adminListPayments,
+  adminGetPayment,
+  adminConfirmPayment,
+  adminRejectPayment,
+  adminRefundPayment,
+} from "../controllers/admin/payments.js";
 
 const adminRouter = express.Router();
 
@@ -33,6 +48,26 @@ adminRouter.post("/users/:id/credits", requireAdmin("manage_users"), adjustUserC
 
 // Manual plan assignment (Phase 4, spec §33). Write action -> manage_users; audited.
 adminRouter.post("/users/:id/plan", requireAdmin("manage_users"), assignUserPlan);
+
+// Subscription management (Phase 5, spec §39). Write action -> manage_users; audited.
+adminRouter.post("/users/:id/subscription", requireAdmin("manage_users"), manageUserSubscription);
+
+// Credit top-ups (Phase 6). Pack catalog management + purchase confirmation/cancellation.
+// Reads -> view_users; writes -> manage_users; every mutation is audited (spec §34-36).
+adminRouter.get("/credit-packs", requireAdmin("view_users"), listCreditPacks);
+adminRouter.post("/credit-packs", requireAdmin("manage_users"), createCreditPack);
+adminRouter.patch("/credit-packs/:key", requireAdmin("manage_users"), updateCreditPack);
+adminRouter.post("/credit-packs/:key/disable", requireAdmin("manage_users"), disableCreditPack);
+adminRouter.get("/purchases/:id", requireAdmin("view_users"), getAdminPurchase);
+adminRouter.post("/purchases/:id", requireAdmin("manage_users"), managePurchase);
+
+// Phase 7: manual UPI payment verification (spec §18-19, §23, §33). Reads -> view_users;
+// confirm/reject/refund -> manage_users; every action is audited.
+adminRouter.get("/payments", requireAdmin("view_users"), adminListPayments);
+adminRouter.get("/payments/:id", requireAdmin("view_users"), adminGetPayment);
+adminRouter.post("/payments/:id/confirm", requireAdmin("manage_users"), adminConfirmPayment);
+adminRouter.post("/payments/:id/reject", requireAdmin("manage_users"), adminRejectPayment);
+adminRouter.post("/payments/:id/refund", requireAdmin("manage_users"), adminRefundPayment);
 
 adminRouter.get("/ai/requests", requireAdmin("view_requests"), listRequests);
 adminRouter.get("/ai/requests/:id", requireAdmin("view_requests"), getRequest);

@@ -29,6 +29,8 @@ import Services from "./pages/admin/Services.jsx";
 import Models from "./pages/admin/Models.jsx";
 import Errors from "./pages/admin/Errors.jsx";
 import Costs from "./pages/admin/Costs.jsx";
+import CreditPacks from "./pages/admin/CreditPacks.jsx";
+import Payments from "./pages/admin/Payments.jsx";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
@@ -68,6 +70,8 @@ const App = () => {
           <Route path="models" element={<Models />} />
           <Route path="errors" element={<Errors />} />
           <Route path="costs" element={<Costs />} />
+          <Route path="credit-packs" element={<CreditPacks />} />
+          <Route path="payments" element={<Payments />} />
         </Route>
       </Routes>
     </div>

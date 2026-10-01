@@ -1,5 +1,8 @@
 import sql from "../../config/Neon.js";
 import { parseList, paginated } from "../../lib/adminQuery.js";
+import { getCurrentSubscription, getSubscriptionHistory } from "../../services/subscriptionService.js";
+import { getPurchaseHistory } from "../../services/creditPurchaseService.js";
+import { getPaymentHistory } from "../../services/paymentService.js";
 
 // Whitelisted sort keys -> SQL expressions (guards against injection in raw SQL).
 const SORT = {
@@ -130,6 +133,16 @@ export const getUserProfile = async (req, res) => {
       SELECT balance FROM credit_wallets WHERE user_id = ${id}
     `;
 
+    // Phase 5: current subscription + full history (spec §39).
+    const subscription = await getCurrentSubscription(id);
+    const subscriptionHistory = await getSubscriptionHistory(id);
+
+    // Phase 6: the user's top-up purchase history (spec §35).
+    const purchases = await getPurchaseHistory(id);
+
+    // Phase 7: the user's UPI payment history (spec §23).
+    const payments = await getPaymentHistory(id);
+
     res.json({
       success: true,
       account: {
@@ -176,6 +189,50 @@ export const getUserProfile = async (req, res) => {
         remaining: e.monthly_limit == null ? null : Math.max(0, e.monthly_limit - Number(e.used)),
       })),
       creditBalance: wallet?.balance ?? 0,
+      subscription: subscription
+        ? {
+            id: subscription.id,
+            status: subscription.status,
+            plan: subscription.plan,
+            billingInterval: subscription.billingInterval,
+            currentPeriodStart: subscription.currentPeriodStart,
+            currentPeriodEnd: subscription.currentPeriodEnd,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+          }
+        : null,
+      subscriptionHistory: subscriptionHistory.map((s) => ({
+        status: s.status,
+        plan: s.plan,
+        currentPeriodStart: s.currentPeriodStart,
+        currentPeriodEnd: s.currentPeriodEnd,
+        cancelAtPeriodEnd: s.cancelAtPeriodEnd,
+        endedAt: s.endedAt,
+      })),
+      purchases: purchases.map((p) => ({
+        id: p.id,
+        status: p.status,
+        pack: p.pack,
+        credits: p.credits,
+        amount: p.amount,
+        currency: p.currency,
+        createdAt: p.createdAt,
+        confirmedAt: p.confirmedAt,
+        cancelledAt: p.cancelledAt,
+      })),
+      payments: payments.map((p) => ({
+        id: p.id,
+        purpose: p.purpose,
+        referenceId: p.referenceId,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        utr: p.utr,
+        userNote: p.userNote,
+        adminNote: p.adminNote,
+        submittedAt: p.submittedAt,
+        verifiedAt: p.verifiedAt,
+        createdAt: p.createdAt,
+      })),
     });
   } catch (error) {
     console.error("getUserProfile failed", error);

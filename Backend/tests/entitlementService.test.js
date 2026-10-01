@@ -96,12 +96,11 @@ test("ensureUserPlan is idempotent — one active plan only", async () => {
   assert.equal(count, 1);
 });
 
-test("getUserPlan throws when the user has no plan", async () => {
+test("getUserPlan defaults to FREE when the user has no plan or subscription", async () => {
+  // Phase 5: the effective plan is resolved (active subscription → user_plans → FREE),
+  // so a user with neither still resolves to FREE rather than erroring.
   const u = await makeUser();
-  await assert.rejects(
-    () => getUserPlan(u),
-    (e) => e instanceof EntitlementError && e.code === "USER_PLAN_NOT_FOUND"
-  );
+  assert.equal((await getUserPlan(u)).key, "FREE");
 });
 
 // ---- entitlement --------------------------------------------------------

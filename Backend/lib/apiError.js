@@ -1,15 +1,22 @@
 import { CreditError } from "./creditError.js";
 import { AiError } from "./aiError.js";
 import { EntitlementError } from "./entitlementError.js";
+import { SubscriptionError } from "./subscriptionError.js";
+import { PurchaseError } from "./purchaseError.js";
+import { PaymentError } from "./paymentError.js";
 
-// Map a CreditError/AiError/EntitlementError to a consistent JSON response,
-// matching the existing flat error shape ({ success:false, code, message }).
-// Unknown errors become a generic 500 with no internals leaked.
+// Map a CreditError/AiError/EntitlementError/SubscriptionError/PurchaseError/PaymentError to a
+// consistent JSON response, matching the existing flat error shape
+// ({ success:false, code, message }). Unknown errors become a generic 500 with no
+// internals leaked.
 export const sendApiError = (res, error) => {
   if (
     error instanceof CreditError ||
     error instanceof AiError ||
-    error instanceof EntitlementError
+    error instanceof EntitlementError ||
+    error instanceof SubscriptionError ||
+    error instanceof PurchaseError ||
+    error instanceof PaymentError
   ) {
     const body = { success: false, code: error.code, message: error.message };
     if (error.code === "INSUFFICIENT_CREDITS") {

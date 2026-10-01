@@ -11,6 +11,7 @@
     "backfill:users": "node scripts/backfillUsers.js",
     "backfill:wallets": "node scripts/backfillWallets.js",
     "seed:plans": "node scripts/seedPlans.js",
+    "seed:packs": "node scripts/seedCreditPacks.js",
     "backfill:plans": "node scripts/backfillPlans.js",
     "test": "node --test"
   },

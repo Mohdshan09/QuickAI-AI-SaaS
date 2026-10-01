@@ -11,6 +11,9 @@ import adminRouter from "./routes/admin.js";
 import meRouter from "./routes/me.js";
 import creditRouter from "./routes/credit.js";
 import entitlementsRouter from "./routes/entitlements.js";
+import subscriptionRouter from "./routes/subscription.js";
+import plansRouter from "./routes/plans.js";
+import paymentRouter from "./routes/payment.js";
 import { clerkWebhook } from "./controllers/webhooks/clerk.js";
 
 
@@ -32,6 +35,10 @@ app.get("/",(req,res) => {
     res.send("App is Live")
 })
 
+// Public pricing catalog (spec §31) — no auth, no user data; mounted before the gate
+// so the landing page can show plans to logged-out visitors.
+app.use("/api/plans",plansRouter)
+
 
 // Gate every /api/* route below. clerkMiddleware() above has already verified the
 // session; here we require it and return a JSON 401 (spec sections 10 & 18)
@@ -50,6 +57,8 @@ app.use(async (req, res, next) => {
 app.use("/api/me",meRouter)
 app.use("/api/credits",creditRouter)
 app.use("/api/entitlements",entitlementsRouter)
+app.use("/api/subscription",subscriptionRouter)
+app.use("/api/payments",paymentRouter)
 app.use("/api/ai",aiRouter);
 app.use("/api/user",userRouter)
 app.use("/api/career",careerRouter)

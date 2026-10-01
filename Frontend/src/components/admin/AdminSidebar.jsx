@@ -9,6 +9,7 @@ import {
   TriangleAlert,
   DollarSign,
   CreditCard,
+  Wallet,
   ScrollText,
   Settings,
   LogOut,
@@ -27,11 +28,12 @@ const navItems = [
   { to: "/admin/models", label: "Models", Icon: Cpu },
   { to: "/admin/errors", label: "Errors", Icon: TriangleAlert },
   { to: "/admin/costs", label: "Costs", Icon: DollarSign },
+  { to: "/admin/credit-packs", label: "Credit Packs", Icon: CreditCard },
+  { to: "/admin/payments", label: "Payments", Icon: Wallet },
 ];
 
 // Reserved for later phases — shown disabled so the roadmap is visible.
 const deferredItems = [
-  { label: "Credits", Icon: CreditCard },
   { label: "Audit Logs", Icon: ScrollText },
   { label: "Settings", Icon: Settings },
 ];

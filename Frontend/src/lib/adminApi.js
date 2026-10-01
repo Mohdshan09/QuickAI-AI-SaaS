@@ -20,9 +20,9 @@ export const useAdminApi = () => {
   const { getToken } = useAuth();
 
   const request = useCallback(
-    async (method, url) => {
+    async (method, url, data) => {
       const token = await getToken();
-      const res = await axios({ method, url, headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios({ method, url, data, headers: { Authorization: `Bearer ${token}` } });
       return res.data;
     },
     [getToken]
@@ -41,6 +41,20 @@ export const useAdminApi = () => {
       getModels: () => request("get", "/api/admin/ai/models"),
       getErrors: (params) => request("get", `/api/admin/ai/errors${qs(params)}`),
       getCosts: (params) => request("get", `/api/admin/costs${qs(params)}`),
+      // Phase 5: controlled, audited subscription management (spec §39).
+      manageSubscription: (id, body) => request("post", `/api/admin/users/${id}/subscription`, body),
+      // Phase 6: credit-pack catalog + purchase management (spec §34-36), all audited.
+      listCreditPacks: () => request("get", "/api/admin/credit-packs"),
+      createCreditPack: (body) => request("post", "/api/admin/credit-packs", body),
+      updateCreditPack: (key, body) => request("patch", `/api/admin/credit-packs/${key}`, body),
+      disableCreditPack: (key, body) => request("post", `/api/admin/credit-packs/${key}/disable`, body),
+      managePurchase: (id, body) => request("post", `/api/admin/purchases/${id}`, body),
+      // Phase 7: manual UPI payment verification (spec §23, §33), all audited.
+      listPayments: (params) => request("get", `/api/admin/payments${qs(params)}`),
+      getPayment: (id) => request("get", `/api/admin/payments/${id}`),
+      confirmPayment: (id, body) => request("post", `/api/admin/payments/${id}/confirm`, body),
+      rejectPayment: (id, body) => request("post", `/api/admin/payments/${id}/reject`, body),
+      refundPayment: (id, body) => request("post", `/api/admin/payments/${id}/refund`, body),
     }),
     [request]
   );

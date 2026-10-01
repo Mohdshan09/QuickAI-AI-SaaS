@@ -72,9 +72,40 @@ export const FREE_ENTITLEMENTS = {
   [ENTITLEMENTS.IMAGE_EDITING]: { enabled: true, monthlyLimit: envLimit(ENTITLEMENTS.IMAGE_EDITING, 3) },
 };
 
-// Entitlements per plan key, for seeding. Only FREE in Phase 4.
+// Paid plans (Phase 5): career ops stay credit-metered (monthlyLimit null) on every
+// plan; generic tools get higher monthly caps per tier. Career entitlement must stay
+// enabled so credit-gated ops remain available on paid plans too.
+const paidEntitlements = (limits) => ({
+  [ENTITLEMENTS.MATCH_ANALYSIS]: { enabled: true, monthlyLimit: null },
+  [ENTITLEMENTS.RESUME_OPTIMIZATION]: { enabled: true, monthlyLimit: null },
+  [ENTITLEMENTS.RESUME_REVIEW]: { enabled: true, monthlyLimit: limits.resume_review },
+  [ENTITLEMENTS.ARTICLE_GENERATION]: { enabled: true, monthlyLimit: limits.article_generation },
+  [ENTITLEMENTS.BLOG_TITLE_GENERATION]: { enabled: true, monthlyLimit: limits.blog_title_generation },
+  [ENTITLEMENTS.IMAGE_GENERATION]: { enabled: true, monthlyLimit: limits.image_generation },
+  [ENTITLEMENTS.IMAGE_EDITING]: { enabled: true, monthlyLimit: limits.image_editing },
+});
+
+export const STARTER_ENTITLEMENTS = paidEntitlements({
+  article_generation: 50,
+  blog_title_generation: 50,
+  image_generation: 25,
+  image_editing: 15,
+  resume_review: 15,
+});
+
+export const PRO_ENTITLEMENTS = paidEntitlements({
+  article_generation: 150,
+  blog_title_generation: 150,
+  image_generation: 75,
+  image_editing: 40,
+  resume_review: 40,
+});
+
+// Entitlements per plan key, for seeding (Phase 5: FREE, STARTER, PRO).
 export const PLAN_ENTITLEMENTS = {
   FREE: FREE_ENTITLEMENTS,
+  STARTER: STARTER_ENTITLEMENTS,
+  PRO: PRO_ENTITLEMENTS,
 };
 
 export const ALL_FEATURE_KEYS = Object.values(ENTITLEMENTS);

@@ -15,6 +15,7 @@ import sql from "../config/Neon.js";
 import { EntitlementError } from "../lib/entitlementError.js";
 import { DEFAULT_PLAN_KEY } from "../config/plans.js";
 import { isKnownFeature, creditCostForFeature, isCreditMetered } from "../config/entitlements.js";
+import { getCurrentSubscription } from "./subscriptionService.js";
 
 // ---- helpers ------------------------------------------------------------
 const isPgCode = (err, code) =>
@@ -34,6 +35,30 @@ const getPlanByKey = async (key) => {
 };
 
 const shapePlan = (row) => row && { key: row.key, name: row.name, description: row.description ?? null };
+
+// Resolve the user's EFFECTIVE plan id (spec §11, Phase 5): the active subscription's
+// plan → else the Phase 4 user_plans baseline → else FREE. Expiry is automatic — a
+// past-due subscription isn't returned by getCurrentSubscription, so resolution falls
+// back to the FREE baseline without any cron.
+const resolveCurrentPlanId = async (userId) => {
+  const sub = await getCurrentSubscription(userId);
+  if (sub?.planId) return sub.planId;
+  const [row] = await sql`
+    SELECT plan_id FROM user_plans WHERE user_id = ${userId} AND status = 'ACTIVE' LIMIT 1
+  `;
+  if (row?.plan_id) return row.plan_id;
+  const free = await getPlanByKey(DEFAULT_PLAN_KEY);
+  return free?.id ?? null;
+};
+
+// The user's effective plan row ({id,key,name,description}).
+const resolveCurrentPlan = async (userId) => {
+  const planId = await resolveCurrentPlanId(userId);
+  if (!planId) throw new EntitlementError("PLAN_NOT_FOUND", "No plan is configured.");
+  const [row] = await sql`SELECT id, key, name, description FROM plans WHERE id = ${planId}`;
+  if (!row) throw new EntitlementError("PLAN_NOT_FOUND", "Plan not found.");
+  return row;
+};
 
 // ---- plan assignment ----------------------------------------------------
 
@@ -62,17 +87,9 @@ export const ensureUserPlan = async (userId, planKey = DEFAULT_PLAN_KEY) => {
   return shapePlan(plan);
 };
 
-/** The user's active plan, or throws USER_PLAN_NOT_FOUND (spec §15). */
+/** The user's effective plan (spec §11): active subscription's plan, else FREE. */
 export const getUserPlan = async (userId) => {
-  const [row] = await sql`
-    SELECT p.key, p.name, p.description
-    FROM user_plans up
-    JOIN plans p ON p.id = up.plan_id
-    WHERE up.user_id = ${userId} AND up.status = 'ACTIVE'
-    LIMIT 1
-  `;
-  if (!row) throw new EntitlementError("USER_PLAN_NOT_FOUND", "No active plan for this user.");
-  return shapePlan(row);
+  return shapePlan(await resolveCurrentPlan(userId));
 };
 
 // ---- entitlement resolution --------------------------------------------
@@ -86,11 +103,12 @@ export const getEntitlement = async (userId, featureKey) => {
   if (!isKnownFeature(featureKey)) {
     throw new EntitlementError("INVALID_FEATURE", "Unknown feature.");
   }
+  const planId = await resolveCurrentPlanId(userId);
+  if (!planId) return null;
   const [row] = await sql`
-    SELECT pe.enabled, pe.monthly_limit
-    FROM user_plans up
-    JOIN plan_entitlements pe ON pe.plan_id = up.plan_id
-    WHERE up.user_id = ${userId} AND up.status = 'ACTIVE' AND pe.feature_key = ${featureKey}
+    SELECT enabled, monthly_limit
+    FROM plan_entitlements
+    WHERE plan_id = ${planId} AND feature_key = ${featureKey}
     LIMIT 1
   `;
   if (!row) return null;
@@ -250,13 +268,13 @@ export const consumeFeatureUsage = async (userId, featureKey) => {
  * features expose monthlyLimit/used/remaining.
  */
 export const getUserEntitlements = async (userId) => {
-  const plan = await getUserPlan(userId);
+  const planRow = await resolveCurrentPlan(userId);
+  const plan = shapePlan(planRow);
   const rows = await sql`
-    SELECT pe.feature_key, pe.enabled, pe.monthly_limit
-    FROM user_plans up
-    JOIN plan_entitlements pe ON pe.plan_id = up.plan_id
-    WHERE up.user_id = ${userId} AND up.status = 'ACTIVE'
-    ORDER BY pe.feature_key ASC
+    SELECT feature_key, enabled, monthly_limit
+    FROM plan_entitlements
+    WHERE plan_id = ${planRow.id}
+    ORDER BY feature_key ASC
   `;
 
   // Current-period usage for all of this user's features in one query.

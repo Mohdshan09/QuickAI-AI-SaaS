@@ -1,4 +1,4 @@
-import { Protect, useClerk, useUser } from "@clerk/clerk-react";
+import { useClerk, useUser } from "@clerk/clerk-react";
 import {
   Hash,
   House,
@@ -13,10 +13,13 @@ import {
   FileUser,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useEntitlements } from "../lib/useEntitlements.js";
 
 const Sidebar = ({ sidebar, setSidebar }) => {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
+  // Authoritative plan name from the application backend, not Clerk.
+  const { plan } = useEntitlements();
 
   // Primary: the job-hunting flow
   const navItems = [
@@ -105,12 +108,7 @@ const Sidebar = ({ sidebar, setSidebar }) => {
           <img src={user?.imageUrl} alt="" className="w-8 rounded-full" />
           <div>
             <h1 className="text-sm font-medium">{user?.fullName}</h1>
-            <p className="text-xs text-gray-500">
-              <Protect plan="premium" fallback="Free">
-                Premium
-              </Protect>
-              &nbsp;Plan
-            </p>
+            <p className="text-xs text-gray-500">{plan?.name || "Free"}&nbsp;Plan</p>
           </div>
         </div>
         <LogOut

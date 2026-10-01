@@ -15,11 +15,22 @@ let entCount = 0;
 try {
   for (const plan of Object.values(PLANS)) {
     const [row] = await sql`
-      INSERT INTO plans (id, key, name, description, is_active, created_at, updated_at)
-      VALUES (${crypto.randomUUID()}, ${plan.key}, ${plan.name}, ${plan.description ?? null}, ${plan.isActive ?? true}, NOW(), NOW())
+      INSERT INTO plans (
+        id, key, name, description, price, currency, billing_interval, monthly_credits,
+        is_active, created_at, updated_at
+      )
+      VALUES (
+        ${crypto.randomUUID()}, ${plan.key}, ${plan.name}, ${plan.description ?? null},
+        ${plan.price ?? 0}, ${plan.currency ?? "INR"}, ${plan.billingInterval ?? "MONTHLY"},
+        ${plan.monthlyCredits ?? 0}, ${plan.isActive ?? true}, NOW(), NOW()
+      )
       ON CONFLICT (key) DO UPDATE
         SET name = EXCLUDED.name,
             description = EXCLUDED.description,
+            price = EXCLUDED.price,
+            currency = EXCLUDED.currency,
+            billing_interval = EXCLUDED.billing_interval,
+            monthly_credits = EXCLUDED.monthly_credits,
             is_active = EXCLUDED.is_active,
             updated_at = NOW()
       RETURNING id
