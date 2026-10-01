@@ -1,6 +1,5 @@
 // Generate Articles
 
-import { clerkClient } from "@clerk/express";
 import sql from "../config/Neon.js";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
@@ -8,8 +7,17 @@ import FormData from "form-data";
 import fs from "fs";
 import { runChat, recordUsage } from "../lib/aiService.js";
 import { SERVICES, PROVIDERS } from "../config/aiServices.js";
+import { ENTITLEMENTS } from "../config/entitlements.js";
+import { checkFeatureAccess, consumeFeatureUsage } from "../services/entitlementService.js";
+import { EntitlementError } from "../lib/entitlementError.js";
+import { sendApiError } from "../lib/apiError.js";
 
 import pdf from "pdf-parse/lib/pdf-parse.js";
+
+// Phase 4: generic AI tools are gated by the application's entitlement + monthly
+// usage system (not Clerk metadata). Each handler pre-checks access, runs the AI,
+// then records one unit of monthly usage on success (spec §7, §18). These tools
+// remain independent of the Phase 3 credit wallet.
 
 const MAX_PROMPT_LENGTH = 1000;
 const ARTICLE_LENGTHS = [800, 1500, 3000, 5000];
@@ -23,8 +31,15 @@ const isValidPrompt = (prompt) =>
   prompt.length <= MAX_PROMPT_LENGTH;
 
 export const GenArticle = async (req, res) => {
+  const userId = req.user.id;
+  const feature = ENTITLEMENTS.ARTICLE_GENERATION;
   try {
-    const { userId } = req.auth();
+    await checkFeatureAccess(userId, feature);
+  } catch (err) {
+    return sendApiError(res, err);
+  }
+
+  try {
     const { prompt, length } = req.body;
 
     if (!isValidPrompt(prompt)) {
@@ -32,16 +47,6 @@ export const GenArticle = async (req, res) => {
     }
     if (!ARTICLE_LENGTHS.includes(length)) {
       return badRequest(res, "Invalid article length.");
-    }
-
-    const plan = req.plan;
-    const free_usage = req.free_usage;
-
-    if (plan != "premium" && free_usage >= 10) {
-      return res.json({
-        success: false,
-        message: "Limit reached. Upgrade to continue.",
-      });
     }
 
     //Generate article using AI service (tracked centrally)
@@ -67,13 +72,8 @@ export const GenArticle = async (req, res) => {
   VALUES (${userId}, ${prompt}, ${content}, 'article')
 `;
 
-    if (plan != "premium") {
-      await clerkClient.users.updateUserMetadata(userId, {
-        privateMetadata: {
-          free_usage: free_usage + 1,
-        },
-      });
-    }
+    // Record one unit of monthly usage (atomic; enforces the limit under races).
+    await consumeFeatureUsage(userId, feature);
 
     res.json({
       success: true,
@@ -81,6 +81,7 @@ export const GenArticle = async (req, res) => {
       message: "Article generated successfully",
     });
   } catch (error) {
+    if (error instanceof EntitlementError) return sendApiError(res, error);
     console.error(error);
     res.status(500).json({
       success: false,
@@ -90,22 +91,19 @@ export const GenArticle = async (req, res) => {
 };
 
 export const genBlogTitle = async (req, res) => {
+  const userId = req.user.id;
+  const feature = ENTITLEMENTS.BLOG_TITLE_GENERATION;
   try {
-    const { userId } = req.auth();
+    await checkFeatureAccess(userId, feature);
+  } catch (err) {
+    return sendApiError(res, err);
+  }
+
+  try {
     const { prompt } = req.body;
 
     if (!isValidPrompt(prompt)) {
       return badRequest(res, `Prompt must be 1-${MAX_PROMPT_LENGTH} characters.`);
-    }
-
-    const plan = req.plan;
-    const free_usage = req.free_usage;
-
-    if (plan != "premium" && free_usage >= 10) {
-      return res.json({
-        success: false,
-        message: "Limit reached. Upgrade to continue.",
-      });
     }
 
     //Generate blog title using AI service (tracked centrally)
@@ -131,13 +129,7 @@ export const genBlogTitle = async (req, res) => {
   VALUES (${userId}, ${prompt}, ${content}, 'blog-title')
 `;
 
-    if (plan != "premium") {
-      await clerkClient.users.updateUserMetadata(userId, {
-        privateMetadata: {
-          free_usage: free_usage + 1,
-        },
-      });
-    }
+    await consumeFeatureUsage(userId, feature);
 
     res.json({
       success: true,
@@ -145,6 +137,7 @@ export const genBlogTitle = async (req, res) => {
       message: "Blog title generated successfully",
     });
   } catch (error) {
+    if (error instanceof EntitlementError) return sendApiError(res, error);
     console.error(error);
     res.status(500).json({
       success: false,
@@ -154,23 +147,20 @@ export const genBlogTitle = async (req, res) => {
 };
 
 export const genImage = async (req, res) => {
+  const userId = req.user.id;
+  const feature = ENTITLEMENTS.IMAGE_GENERATION;
+  try {
+    await checkFeatureAccess(userId, feature);
+  } catch (err) {
+    return sendApiError(res, err);
+  }
+
   const startedAt = new Date();
-  const { userId } = req.auth();
   try {
     const { prompt, publish } = req.body;
 
     if (!isValidPrompt(prompt)) {
       return badRequest(res, `Prompt must be 1-${MAX_PROMPT_LENGTH} characters.`);
-    }
-
-    const plan = req.plan;
-    const free_usage = req.free_usage;
-
-    if (plan != "premium" && free_usage >= 5) {
-      return res.json({
-        success: false,
-        message: "Limit reached. Upgrade to continue.",
-      });
     }
 
     //Generate image using AI service
@@ -208,13 +198,7 @@ export const genImage = async (req, res) => {
       startedAt,
     });
 
-    if (plan != "premium") {
-      await clerkClient.users.updateUserMetadata(userId, {
-        privateMetadata: {
-          free_usage: free_usage + 1,
-        },
-      });
-    }
+    await consumeFeatureUsage(userId, feature);
 
     res.json({
       success: true,
@@ -222,6 +206,8 @@ export const genImage = async (req, res) => {
       message: "Image generated successfully",
     });
   } catch (error) {
+    // A usage-limit race is not a provider error — surface it without recording one.
+    if (error instanceof EntitlementError) return sendApiError(res, error);
     console.error(error);
     await recordUsage({
       userId,
@@ -240,19 +226,17 @@ export const genImage = async (req, res) => {
 };
 
 export const removeImageBG = async (req, res) => {
+  const userId = req.user.id;
+  const feature = ENTITLEMENTS.IMAGE_EDITING;
+  try {
+    await checkFeatureAccess(userId, feature);
+  } catch (err) {
+    return sendApiError(res, err);
+  }
+
   const startedAt = new Date();
-  const { userId } = req.auth();
   try {
     const image = req.file;
-
-    const plan = req.plan;
-
-    if (plan != "premium") {
-      return res.json({
-        success: false,
-        message: "This feature is only available for premium users.",
-      });
-    }
 
     //remove background using AI service
 
@@ -280,12 +264,15 @@ export const removeImageBG = async (req, res) => {
       startedAt,
     });
 
+    await consumeFeatureUsage(userId, feature);
+
     res.json({
       success: true,
       content: secure_url,
       message: "Background removed successfully",
     });
   } catch (error) {
+    if (error instanceof EntitlementError) return sendApiError(res, error);
     console.error(error);
     await recordUsage({
       userId,
@@ -304,23 +291,21 @@ export const removeImageBG = async (req, res) => {
 };
 
 export const removeImageObject = async (req, res) => {
+  const userId = req.user.id;
+  const feature = ENTITLEMENTS.IMAGE_EDITING;
+  try {
+    await checkFeatureAccess(userId, feature);
+  } catch (err) {
+    return sendApiError(res, err);
+  }
+
   const startedAt = new Date();
-  const { userId } = req.auth();
   try {
     const { object } = req.body;
     const image = req.file;
 
     if (typeof object !== "string" || !/^[a-zA-Z ]{1,40}$/.test(object)) {
       return badRequest(res, "Object name must be 1-40 letters.");
-    }
-
-    const plan = req.plan;
-
-    if (plan != "premium") {
-      return res.json({
-        success: false,
-        message: "This feature is only available for premium users.",
-      });
     }
 
     //remove background using AI service
@@ -352,12 +337,15 @@ export const removeImageObject = async (req, res) => {
       startedAt,
     });
 
+    await consumeFeatureUsage(userId, feature);
+
     res.json({
       success: true,
       content: imageUrl,
       message: "object removed successfully.",
     });
   } catch (error) {
+    if (error instanceof EntitlementError) return sendApiError(res, error);
     console.error(error);
     await recordUsage({
       userId,
@@ -376,18 +364,16 @@ export const removeImageObject = async (req, res) => {
 };
 
 export const resumeReview = async (req, res) => {
+  const userId = req.user.id;
+  const feature = ENTITLEMENTS.RESUME_REVIEW;
   try {
-    const { userId } = req.auth();
-    const resume = req.file;
-    const plan = req.plan;
-    const free_usage = req.free_usage;
+    await checkFeatureAccess(userId, feature);
+  } catch (err) {
+    return sendApiError(res, err);
+  }
 
-    if (plan != "premium") {
-      return res.json({
-        success: false,
-        message: "This feature is only available for premium users.",
-      });
-    }
+  try {
+    const resume = req.file;
 
     //resume Analyzer
     if (!resume) return badRequest(res, "Please upload a PDF resume.");
@@ -403,8 +389,8 @@ export const resumeReview = async (req, res) => {
     const pdfData = await pdf(dataBuffer);
 
     const prompt = `
-    You are an expert career advisor and recruiter. 
-I will provide you with a candidate's resume. 
+    You are an expert career advisor and recruiter.
+I will provide you with a candidate's resume.
 Your task is to:
 
 1. Analyze the skills, education, and work experience.
@@ -439,19 +425,14 @@ Resume content:\n\n\n ${pdfData.text}
   VALUES (${userId}, ${`Review the uploaded resume`}, ${content}, 'resume-review')
 `;
 
-    if (plan != "premium") {
-      await clerkClient.users.updateUserMetadata(userId, {
-        privateMetadata: {
-          free_usage: free_usage + 1,
-        },
-      });
-    }
+    await consumeFeatureUsage(userId, feature);
 
     res.json({
       success: true,
       content,
     });
   } catch (error) {
+    if (error instanceof EntitlementError) return sendApiError(res, error);
     console.error(error);
     res.status(500).json({
       success: false,

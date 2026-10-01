@@ -10,6 +10,7 @@ import careerRouter from "./routes/Career.js";
 import adminRouter from "./routes/admin.js";
 import meRouter from "./routes/me.js";
 import creditRouter from "./routes/credit.js";
+import entitlementsRouter from "./routes/entitlements.js";
 import { clerkWebhook } from "./controllers/webhooks/clerk.js";
 
 
@@ -48,6 +49,7 @@ app.use(async (req, res, next) => {
 
 app.use("/api/me",meRouter)
 app.use("/api/credits",creditRouter)
+app.use("/api/entitlements",entitlementsRouter)
 app.use("/api/ai",aiRouter);
 app.use("/api/user",userRouter)
 app.use("/api/career",careerRouter)

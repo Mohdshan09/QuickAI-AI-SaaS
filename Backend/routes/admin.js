@@ -12,6 +12,7 @@ import {
 import { getCosts } from "../controllers/admin/analytics.js";
 import { getMe } from "../controllers/admin/me.js";
 import { adjustUserCredits } from "../controllers/admin/credits.js";
+import { assignUserPlan } from "../controllers/admin/plan.js";
 
 const adminRouter = express.Router();
 
@@ -29,6 +30,9 @@ adminRouter.get("/users/:id", requireAdmin("view_users"), getUserProfile);
 
 // Credit adjustment foundation (Phase 2, spec §23). Write action -> manage_users.
 adminRouter.post("/users/:id/credits", requireAdmin("manage_users"), adjustUserCredits);
+
+// Manual plan assignment (Phase 4, spec §33). Write action -> manage_users; audited.
+adminRouter.post("/users/:id/plan", requireAdmin("manage_users"), assignUserPlan);
 
 adminRouter.get("/ai/requests", requireAdmin("view_requests"), listRequests);
 adminRouter.get("/ai/requests/:id", requireAdmin("view_requests"), getRequest);

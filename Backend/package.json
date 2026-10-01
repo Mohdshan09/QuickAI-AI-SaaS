@@ -10,6 +10,8 @@
     "migrate": "node scripts/migrate.js",
     "backfill:users": "node scripts/backfillUsers.js",
     "backfill:wallets": "node scripts/backfillWallets.js",
+    "seed:plans": "node scripts/seedPlans.js",
+    "backfill:plans": "node scripts/backfillPlans.js",
     "test": "node --test"
   },
   "author": "Mohammad Shan",

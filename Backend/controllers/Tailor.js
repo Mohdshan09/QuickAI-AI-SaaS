@@ -3,6 +3,8 @@ import { generateJSON } from "../config/ai.js";
 import { SERVICES } from "../config/aiServices.js";
 import { extractRequirements } from "./Match.js";
 import { executeWithCredits } from "../services/aiCreditService.js";
+import { checkFeatureAccess } from "../services/entitlementService.js";
+import { ENTITLEMENTS } from "../config/entitlements.js";
 import { sendApiError } from "../lib/apiError.js";
 import {
   parseResumeStructured,
@@ -100,6 +102,14 @@ export const createTailor = async (req, res) => {
       SELECT * FROM resumes WHERE id = ${Number(resumeId)} AND user_id = ${userId}
     `;
     if (!resume) return res.status(400).json({ success: false, message: "Resume not found." });
+
+    // Entitlement BEFORE credits (spec §17, §19): confirm resume optimization is
+    // available on the user's plan before any credit is charged.
+    try {
+      await checkFeatureAccess(userId, ENTITLEMENTS.RESUME_OPTIMIZATION);
+    } catch (err) {
+      return sendApiError(res, err);
+    }
 
     // Reuse the saved tailored result for this exact (job, resume) unless the
     // user explicitly asks for a fresh one — same policy as match.

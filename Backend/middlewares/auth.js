@@ -2,6 +2,7 @@ import { clerkClient } from "@clerk/express";
 import { fromClerkUser, upsertUser, mapUser } from "../lib/userSync.js";
 import { logAuthEvent, AUTH_EVENTS } from "../lib/logger.js";
 import { ensureWallet } from "../services/creditService.js";
+import { ensureUserPlan } from "../services/entitlementService.js";
 
 // Centralized authentication middleware (spec section 8). It:
 //   1. confirms the Clerk session and obtains the Clerk user id,
@@ -14,9 +15,9 @@ import { ensureWallet } from "../services/creditService.js";
 // equals the Clerk id). Controllers should read req.user.id rather than the raw
 // Clerk session id.
 export const auth = async (req, res, next) => {
-  let userId, has;
+  let userId;
   try {
-    ({ userId, has } = await req.auth());
+    ({ userId } = await req.auth());
   } catch {
     userId = null;
   }
@@ -27,23 +28,20 @@ export const auth = async (req, res, next) => {
     return res.status(401).json({ success: false, message: "Unauthorized." });
   }
 
+  // Phase 4: plan & feature access come from the application database, NOT Clerk
+  // (spec §26). We no longer read Clerk premium flags or privateMetadata.free_usage
+  // here — the entitlement service is the sole authority. users.plan is kept only
+  // as a display-only mirror ("free").
+  // Non-authoritative plan mirror used only by display/storage caps (e.g. the
+  // resume/job count caps in controllers/Career.js). Feature access is decided by
+  // the entitlement service, never by this value.
+  req.plan = "free";
+
   let clerkUser;
   try {
-    const hasPremiumPlan = await has({ plan: "premium" });
     clerkUser = await clerkClient.users.getUser(userId);
-
-    // Free-usage counter lives in Clerk privateMetadata (unchanged behavior).
-    if (!hasPremiumPlan && clerkUser.privateMetadata.free_usage) {
-      req.free_usage = clerkUser.privateMetadata.free_usage;
-    } else {
-      await clerkClient.users.updateUserMetadata(userId, {
-        privateMetadata: { free_usage: 0 },
-      });
-      req.free_usage = 0;
-    }
-    req.plan = hasPremiumPlan ? "premium" : "free";
   } catch (error) {
-    // We have a session id but Clerk lookup / plan resolution failed.
+    // We have a session id but the Clerk user lookup failed.
     logAuthEvent(AUTH_EVENTS.AUTH_FAILED, { userId, reason: "clerk_lookup_failed" });
     console.error("auth: Clerk lookup failed:", error.message);
     return res.status(401).json({ success: false, message: "Unauthorized." });
@@ -52,18 +50,22 @@ export const auth = async (req, res, next) => {
   // Resolve the internal user. This is identity-critical: if it fails we stop
   // rather than serve the request with no user (spec section 18).
   try {
-    const row = await upsertUser(fromClerkUser(clerkUser), { plan: req.plan });
+    const row = await upsertUser(fromClerkUser(clerkUser), { plan: "free" });
     req.user = mapUser(row);
     logAuthEvent(row.was_created ? AUTH_EVENTS.USER_CREATED : AUTH_EVENTS.USER_SYNCED, {
       userId: req.user.id,
       source: "middleware",
     });
-    // New user -> provision their credit wallet + initial grant (spec Phase 2 §19).
-    // Best-effort and non-blocking: wallet creation must never fail a request; the
-    // lazy ensure on GET /api/credits and the backfill script are the safety nets.
+    // New user -> provision their credit wallet + initial grant (Phase 2 §19) and
+    // their FREE application plan (Phase 4 §27). Best-effort and non-blocking:
+    // neither must fail a request; the lazy ensures on GET /api/credits and
+    // GET /api/entitlements plus the backfill scripts are the safety nets.
     if (row.was_created) {
       ensureWallet(req.user.id).catch((e) =>
         console.error("ensureWallet on signup failed (non-blocking):", e.message)
+      );
+      ensureUserPlan(req.user.id).catch((e) =>
+        console.error("ensureUserPlan on signup failed (non-blocking):", e.message)
       );
     }
     next();

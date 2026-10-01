@@ -105,6 +105,31 @@ export const getUserProfile = async (req, res) => {
       ORDER BY created_at DESC LIMIT 20
     `;
 
+    // Phase 4: authoritative application plan (from user_plans, NOT users.plan),
+    // this month's per-feature usage against its limit, and the credit balance.
+    const [planRow] = await sql`
+      SELECT p.key, p.name, up.status, up.started_at, up.expires_at
+      FROM user_plans up JOIN plans p ON p.id = up.plan_id
+      WHERE up.user_id = ${id} AND up.status = 'ACTIVE'
+      LIMIT 1
+    `;
+
+    const entitlementRows = await sql`
+      SELECT pe.feature_key, pe.enabled, pe.monthly_limit,
+             coalesce(fu.usage_count, 0) AS used
+      FROM user_plans up
+      JOIN plan_entitlements pe ON pe.plan_id = up.plan_id
+      LEFT JOIN feature_usage fu
+        ON fu.user_id = up.user_id AND fu.feature_key = pe.feature_key
+       AND fu.period_start = date_trunc('month', CURRENT_DATE)::date
+      WHERE up.user_id = ${id} AND up.status = 'ACTIVE'
+      ORDER BY pe.feature_key ASC
+    `;
+
+    const [wallet] = await sql`
+      SELECT balance FROM credit_wallets WHERE user_id = ${id}
+    `;
+
     res.json({
       success: true,
       account: {
@@ -134,6 +159,23 @@ export const getUserProfile = async (req, res) => {
       },
       services: services.map((s) => ({ ...s, tokens: Number(s.tokens), cost: Number(s.cost) })),
       recent,
+      plan: planRow
+        ? {
+            key: planRow.key,
+            name: planRow.name,
+            status: planRow.status,
+            startedAt: planRow.started_at,
+            expiresAt: planRow.expires_at,
+          }
+        : null,
+      entitlements: entitlementRows.map((e) => ({
+        featureKey: e.feature_key,
+        enabled: e.enabled,
+        monthlyLimit: e.monthly_limit,
+        used: Number(e.used),
+        remaining: e.monthly_limit == null ? null : Math.max(0, e.monthly_limit - Number(e.used)),
+      })),
+      creditBalance: wallet?.balance ?? 0,
     });
   } catch (error) {
     console.error("getUserProfile failed", error);

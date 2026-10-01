@@ -15,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { useCareerApi, scoreColor } from "../../lib/careerApi";
 import { useCredits, AI_ACTION_COSTS, isInsufficientCredits } from "../../lib/useCredits";
+import { entitlementErrorMessage, isFeatureNotAvailable } from "../../lib/useEntitlements";
 import { Card, ScoreRing, FactorBar } from "../../components/career/MatchVisuals";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "");
@@ -198,8 +199,11 @@ const MatchReport = () => {
             ? `Not enough credits: this uses ${required}, you have ${available}.`
             : "You do not have enough credits for this action."
         );
+      } else if (isFeatureNotAvailable(err)) {
+        setLimitReached(true);
+        toast.error(entitlementErrorMessage(err));
       } else {
-        toast.error(err.response?.data?.message || err.message);
+        toast.error(entitlementErrorMessage(err));
       }
     } finally {
       setRunning(false);

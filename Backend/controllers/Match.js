@@ -3,6 +3,8 @@ import { generateJSON } from "../config/ai.js";
 import { SERVICES } from "../config/aiServices.js";
 import { matchKeywords, coverage } from "../lib/keywords.js";
 import { executeWithCredits } from "../services/aiCreditService.js";
+import { checkFeatureAccess } from "../services/entitlementService.js";
+import { ENTITLEMENTS } from "../config/entitlements.js";
 import { sendApiError } from "../lib/apiError.js";
 
 // weights must sum to 1
@@ -114,6 +116,15 @@ export const createMatch = async (req, res) => {
       SELECT * FROM resumes WHERE id = ${Number(resumeId)} AND user_id = ${userId}
     `;
     if (!resume) return res.status(400).json({ success: false, message: "Resume not found." });
+
+    // Entitlement BEFORE credits (spec §17, §19): confirm the feature is available
+    // on the user's plan first, so credits are never consumed for a feature the
+    // plan doesn't grant. Credit cost itself is handled by executeWithCredits below.
+    try {
+      await checkFeatureAccess(userId, ENTITLEMENTS.MATCH_ANALYSIS);
+    } catch (err) {
+      return sendApiError(res, err);
+    }
 
     // By default we reuse the saved analysis for this exact (job, resume): the
     // report is meant to be read and acted on, not re-rolled on every click, and

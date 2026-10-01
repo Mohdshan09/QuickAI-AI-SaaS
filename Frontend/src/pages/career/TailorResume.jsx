@@ -4,6 +4,7 @@ import { ArrowLeft, Check, X, Printer, RefreshCw, Sparkles, Lock, Wand2, Eye } f
 import toast from "react-hot-toast";
 import { useCareerApi } from "../../lib/careerApi";
 import { useCredits, AI_ACTION_COSTS, isInsufficientCredits } from "../../lib/useCredits";
+import { entitlementErrorMessage, isFeatureNotAvailable } from "../../lib/useEntitlements";
 import { Card } from "../../components/career/MatchVisuals";
 import { wordDiff } from "../../lib/wordDiff";
 import { applyTailored, acceptedCount, applyToStructured } from "../../lib/tailorApply";
@@ -170,8 +171,11 @@ const TailorResume = () => {
             ? `Not enough credits: this uses ${required}, you have ${available}.`
             : "You do not have enough credits for this action."
         );
+      } else if (isFeatureNotAvailable(err)) {
+        setCreditBlocked(true);
+        toast.error(entitlementErrorMessage(err));
       } else {
-        toast.error(err.response?.data?.message || err.message);
+        toast.error(entitlementErrorMessage(err));
       }
     } finally {
       setRunning(false);

@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 import Markdown from "react-markdown";
+import { entitlementErrorMessage } from "../lib/useEntitlements.js";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -41,7 +42,7 @@ const Article = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      toast.error(entitlementErrorMessage(error));
     }
 
     setLoading(false);

@@ -26,7 +26,7 @@ const UserDetail = () => {
   }, [api, id]);
 
   if (!data) return <Spinner />;
-  const { account, usage, cost, services, recent } = data;
+  const { account, usage, cost, services, recent, plan, entitlements = [], creditBalance } = data;
   const name = [account.firstName, account.lastName].filter(Boolean).join(" ") || account.email || account.id;
 
   return (
@@ -71,6 +71,38 @@ const UserDetail = () => {
           <Row k="Total" v={fmtCost(cost.total)} />
           <Row k="This month" v={fmtCost(cost.month)} />
           <Row k="This week" v={fmtCost(cost.week)} />
+        </Card>
+      </div>
+
+      {/* Phase 4: authoritative application plan + monthly feature usage + credits. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        <Card className="p-4">
+          <SectionTitle>Plan & Credits</SectionTitle>
+          <Row k="Plan" v={plan ? `${plan.name} (${plan.key})` : "—"} />
+          <Row k="Status" v={plan?.status || "—"} />
+          <Row k="Credit balance" v={fmtInt(creditBalance ?? 0)} />
+        </Card>
+
+        <Card className="p-4 lg:col-span-2">
+          <SectionTitle>Feature Entitlements (this month)</SectionTitle>
+          {entitlements.length === 0 ? (
+            <p className="text-sm text-gray-400">No entitlements.</p>
+          ) : (
+            entitlements.map((e) => (
+              <div key={e.featureKey} className="flex justify-between items-center py-1.5 text-sm border-b border-gray-100 last:border-0">
+                <span className="text-slate-700">{prettyLabel(e.featureKey)}</span>
+                <span className="text-gray-500">
+                  {!e.enabled ? (
+                    <Badge tone="amber">disabled</Badge>
+                  ) : e.monthlyLimit == null ? (
+                    <Badge tone="blue">credits</Badge>
+                  ) : (
+                    <span className="tabular-nums">{fmtInt(e.used)} / {fmtInt(e.monthlyLimit)} used</span>
+                  )}
+                </span>
+              </div>
+            ))
+          )}
         </Card>
       </div>
 

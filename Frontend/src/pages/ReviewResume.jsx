@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 import FormData from "form-data";
 import Markdown from "react-markdown";
+import { entitlementErrorMessage } from "../lib/useEntitlements.js";
 
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
@@ -43,7 +44,7 @@ const ReviewResume = () => {
         toast.error(data.message);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message);
+      toast.error(entitlementErrorMessage(err));
     }
 
     setLoading(false);
