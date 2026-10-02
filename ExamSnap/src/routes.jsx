@@ -7,6 +7,7 @@ import ExamPage, { getStaticPaths as examStaticPaths } from "./pages/ExamPage.js
 import CheckerPage, { getStaticPaths as checkerStaticPaths } from "./pages/CheckerPage.jsx";
 import CustomPage from "./pages/CustomPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
+import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 
 // Root wraps everything in the i18n provider (above Layout, since the header uses it).
 function Root() {
@@ -38,6 +39,7 @@ export const routes = [
           { index: true, element: <Home />, entry: "src/pages/Home.jsx" },
           { path: "custom", element: <CustomPage />, entry: "src/pages/CustomPage.jsx" },
           { path: "privacy", element: <PrivacyPage />, entry: "src/pages/PrivacyPage.jsx" },
+          { path: "analytics", element: <AnalyticsPage />, entry: "src/pages/AnalyticsPage.jsx" },
           {
             path: "check/:slug",
             element: <CheckerPage />,

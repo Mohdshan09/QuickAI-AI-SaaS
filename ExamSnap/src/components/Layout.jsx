@@ -6,6 +6,7 @@ import LangToggle from "./LangToggle.jsx";
 import OutcomePrompt from "./OutcomePrompt.jsx";
 import RejectionForm from "./RejectionForm.jsx";
 import { initQueueFlush } from "../lib/submissionQueue.js";
+import { pingVisit } from "../lib/visit.js";
 
 // App shell: branded header ("ExamSnap by Quick AI"), content outlet, privacy footer.
 // On any non-home page the header shows a Back control so users are never stuck — handy
@@ -17,9 +18,10 @@ export default function Layout() {
   const isHome = pathname === "/";
   const [showReject, setShowReject] = useState(false);
 
-  // Flush any submissions that were queued while offline (best-effort, client only).
+  // Flush queued submissions + record one visit per session (best-effort, client only).
   useEffect(() => {
     initQueueFlush();
+    pingVisit();
   }, []);
 
   // Prefer in-app history (preserves scroll/state); fall back to the exam list for visitors
