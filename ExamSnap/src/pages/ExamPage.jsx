@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Head } from "vite-react-ssg";
-import { getExamBySlug, getExams } from "../specs/loadSpecs.js";
+import { getExamBySlug, getListedExams } from "../specs/loadSpecs.js";
 import SpecTable from "../components/SpecTable.jsx";
 import ClientToolFlow from "../components/ClientToolFlow.jsx";
 import { track, EVENTS } from "../lib/analytics.js";
@@ -29,9 +29,12 @@ export default function ExamPage() {
     );
   }
 
-  const title = `${exam.name} photo & signature size, format (${exam.documents
-    .map((d) => `${d.width}×${d.height}px`)
-    .join(", ")}) — ExamSnap`;
+  const dims = exam.processableDocuments
+    .filter((d) => d.dimensionSpecified)
+    .map((d) => `${d.width}×${d.height}px`);
+  const title = `${exam.name} photo & signature size & format${
+    dims.length ? ` (${dims.join(", ")})` : ""
+  } — ExamSnap`;
   const description = `Resize and compress your ${exam.name} photo and signature to the exact required pixel size and KB range, free and on your phone. Validated before download.`;
 
   return (
@@ -73,5 +76,5 @@ export default function ExamPage() {
 
 // vite-react-ssg: enumerate one static route per exam so each page prerenders to HTML.
 export function getStaticPaths() {
-  return getExams().map((e) => `/${e.slug}`);
+  return getListedExams().map((e) => `/${e.slug}`);
 }

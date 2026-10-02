@@ -96,5 +96,52 @@
 
   "kit.ready": "{n} of {total} documents ready",
   "kit.downloadAll": "Download all (ZIP)",
-  "kit.zipping": "Preparing ZIP…"
+  "kit.zipping": "Preparing ZIP…",
+
+  "spec.notSpecified": "Not specified",
+  "spec.live": "Captured live",
+  "spec.defaultHint": "default {dims}",
+  "spec.subUpload": "Upload",
+  "spec.subLive": "Captured live in portal",
+  "spec.subBoth": "Upload + live capture",
+
+  "live.title": "Captured live in the portal",
+  "live.body": "This exam captures your {docs} live during the online application — there's nothing to upload or resize here.",
+  "rules.title": "{doc} — official content rules",
+
+  "custom.examName": "Exam name (optional)",
+  "custom.examNameHint": "Telling us the exam helps us verify and add it next.",
+  "custom.notifUrl": "Official notification link (optional)",
+  "custom.notifHint": "Find the photo and signature sizes in the 'How to apply' section of the official notification.",
+
+  "quality.title": "Does this look right?",
+  "quality.yes": "Looks good",
+  "quality.no": "Something's off",
+  "quality.thanks": "Thanks for the feedback!",
+  "quality.reasonTitle": "What's off? (optional)",
+  "quality.reason.blurry": "Blurry",
+  "quality.reason.dark": "Too dark",
+  "quality.reason.crop": "Cropped wrong",
+  "quality.reason.bg": "Background not white",
+  "quality.reason.other": "Other",
+
+  "outcome.title": "Did the {exam} portal accept your files?",
+  "outcome.yes": "Yes, accepted",
+  "outcome.no": "No, rejected",
+  "outcome.later": "Haven't uploaded yet",
+  "outcome.thanks": "Thanks — this helps other applicants.",
+  "outcome.dismiss": "Dismiss",
+
+  "reject.title": "Report a rejected file",
+  "reject.which": "Which document was rejected?",
+  "reject.error": "Portal error message (optional)",
+  "reject.errorHint": "Max 300 characters. Please don't include any personal details.",
+  "reject.submit": "Send report",
+  "reject.cancel": "Cancel",
+  "reject.thanks": "Thanks, we'll review this exam's sizes.",
+  "reject.checkNotif": "Double-check the official notification:",
+  "reject.docOther": "Other / not sure",
+
+  "footer.rejected": "File rejected?",
+  "footer.privacy": "Privacy"
 }

@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Flag } from "lucide-react";
 import { useT } from "../i18n/index.jsx";
 import LangToggle from "./LangToggle.jsx";
+import OutcomePrompt from "./OutcomePrompt.jsx";
+import RejectionForm from "./RejectionForm.jsx";
+import { initQueueFlush } from "../lib/submissionQueue.js";
 
 // App shell: branded header ("ExamSnap by Quick AI"), content outlet, privacy footer.
 // On any non-home page the header shows a Back control so users are never stuck — handy
@@ -11,6 +15,12 @@ export default function Layout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isHome = pathname === "/";
+  const [showReject, setShowReject] = useState(false);
+
+  // Flush any submissions that were queued while offline (best-effort, client only).
+  useEffect(() => {
+    initQueueFlush();
+  }, []);
 
   // Prefer in-app history (preserves scroll/state); fall back to the exam list for visitors
   // who landed directly on an exam page from search (no in-app history to go back to).
@@ -52,11 +62,27 @@ export default function Layout() {
       </main>
 
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-          <ShieldCheck className="w-3.5 h-3.5" aria-hidden />
-          {t("privacy")}
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5" aria-hidden />
+            {t("privacy")}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowReject(true)}
+            className="inline-flex items-center gap-1 text-slate-500 hover:text-blue-600 hover:underline"
+          >
+            <Flag className="w-3.5 h-3.5" aria-hidden />
+            {t("footer.rejected")}
+          </button>
+          <Link to="/privacy" className="hover:text-blue-600 hover:underline">
+            {t("footer.privacy")}
+          </Link>
         </div>
       </footer>
+
+      <OutcomePrompt />
+      {showReject && <RejectionForm onClose={() => setShowReject(false)} />}
     </div>
   );
 }

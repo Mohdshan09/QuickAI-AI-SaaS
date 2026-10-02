@@ -1,12 +1,12 @@
 import { Head } from "vite-react-ssg";
-import { getExams } from "../specs/loadSpecs.js";
+import { getListedExams } from "../specs/loadSpecs.js";
 import ExamPicker from "../components/ExamPicker.jsx";
 import ExamDropdown from "../components/ExamDropdown.jsx";
 import { useT } from "../i18n/index.jsx";
 
 export default function Home() {
   const t = useT();
-  const exams = getExams();
+  const exams = getListedExams();
 
   return (
     <div>

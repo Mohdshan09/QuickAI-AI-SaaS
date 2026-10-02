@@ -29,24 +29,29 @@ export function validate(meta, docSpec) {
     });
   }
 
-  if (docSpec.width != null) {
-    checks.push({
-      rule: "width",
-      label: "Width",
-      ok: meta.width === docSpec.width,
-      actual: `${meta.width}px`,
-      expected: `${docSpec.width}px`,
-    });
-  }
-
-  if (docSpec.height != null) {
-    checks.push({
-      rule: "height",
-      label: "Height",
-      ok: meta.height === docSpec.height,
-      actual: `${meta.height}px`,
-      expected: `${docSpec.height}px`,
-    });
+  // Dimension checks only run when the official source actually specified a size. KB-only specs
+  // (dimensionSpecified === false) output at a labelled default, so pixels are informational and
+  // never fail. A specified dimension may be an exact value, a [min,max] range or a min-only
+  // bound; min === max collapses to exact equality.
+  if (docSpec.dimensionSpecified !== false) {
+    const dimCheck = (rule, label, actual, min, max) => {
+      if (min == null && (max == null || !Number.isFinite(max))) return;
+      const okMin = min == null || actual >= min;
+      const okMax = max == null || !Number.isFinite(max) || actual <= max;
+      const expected =
+        min === max ? `${min}px`
+          : !Number.isFinite(max) ? `≥ ${min}px`
+            : min == null ? `≤ ${max}px`
+              : `${min}–${max}px`;
+      checks.push({ rule, label, ok: okMin && okMax, actual: `${actual}px`, expected });
+    };
+    // Fall back to an exact width/height for flat specs that predate widthMin/widthMax.
+    const wMin = docSpec.widthMin ?? docSpec.width;
+    const wMax = docSpec.widthMax ?? docSpec.width;
+    const hMin = docSpec.heightMin ?? docSpec.height;
+    const hMax = docSpec.heightMax ?? docSpec.height;
+    dimCheck("width", "Width", meta.width, wMin, wMax);
+    dimCheck("height", "Height", meta.height, hMin, hMax);
   }
 
   const hasMin = docSpec.minKb > 0;

@@ -8,18 +8,52 @@ export default function SpecTable({ exam }) {
   const t = useT();
 
   const sizeText = (d) => {
+    if (!d.sizeSpecified) return t("spec.notSpecified");
     if (d.minKb > 0 && Number.isFinite(d.maxKb)) return `${d.minKb}–${d.maxKb} KB`;
     if (Number.isFinite(d.maxKb)) return `≤ ${d.maxKb} KB`;
     if (d.minKb > 0) return `≥ ${d.minKb} KB`;
     return "—";
   };
 
+  // Per-axis string: exact value, a min-only bound, or a min–max range.
+  const axis = (min, max, target) => {
+    if (min != null && max != null && Number.isFinite(max)) return min === max ? `${min}` : `${min}–${max}`;
+    if (min != null) return `≥ ${min}`;
+    if (max != null && Number.isFinite(max)) return `≤ ${max}`;
+    return `${target}`;
+  };
+
+  const dimsText = (d) => {
+    if (d.isLive) return t("spec.live");
+    if (!d.dimensionSpecified) return t("spec.notSpecified");
+    return `${axis(d.widthMin, d.widthMax, d.width)}×${axis(d.heightMin, d.heightMax, d.height)}px`;
+  };
+
+  // Extra per-document hints: the labelled default for KB-only specs, physical size, min DPI.
+  const dimsHint = (d) => {
+    const bits = [];
+    if (!d.isLive && !d.dimensionSpecified) bits.push(t("spec.defaultHint", { dims: `${d.width}×${d.height}px` }));
+    if (d.physicalSize) bits.push(`${d.physicalSize.w}×${d.physicalSize.h} ${d.physicalSize.unit}`);
+    if (d.minDpi) bits.push(`≥ ${d.minDpi} DPI`);
+    return bits.join(" · ");
+  };
+
+  const bgText = (d) => {
+    if (d.background === "not-specified") return t("spec.notSpecified");
+    return d.background;
+  };
+
+  const submissionText = (d) =>
+    d.submission === "live" ? t("spec.subLive")
+      : d.submission === "both" ? t("spec.subBoth")
+        : t("spec.subUpload");
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
       {!exam.verified && (
         <p className="flex items-start gap-2 bg-amber-50 text-amber-800 text-sm px-4 py-2 border-b border-amber-200">
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
-          {t(exam.usesGenericDefaults ? "exam.genericWarning" : "exam.unverifiedWarning")}
+          {t("exam.unverifiedWarning")}
         </p>
       )}
 
@@ -38,13 +72,17 @@ export default function SpecTable({ exam }) {
         </thead>
         <tbody>
           {exam.documents.map((d, i) => (
-            <tr key={i} className="border-t border-slate-100">
-              <td className="px-4 py-2 font-medium text-slate-800">{d.label}</td>
+            <tr key={i} className="border-t border-slate-100 align-top">
+              <td className="px-4 py-2 font-medium text-slate-800">
+                {d.label}
+                <span className="block text-xs font-normal text-slate-400">{submissionText(d)}</span>
+              </td>
               <td className="px-4 py-2 text-slate-600">
-                {d.width}×{d.height}px
+                {dimsText(d)}
+                {dimsHint(d) && <span className="block text-xs text-slate-400">{dimsHint(d)}</span>}
               </td>
               <td className="px-4 py-2 text-slate-600">{sizeText(d)}</td>
-              <td className="px-4 py-2 text-slate-600 capitalize">{d.background}</td>
+              <td className="px-4 py-2 text-slate-600 capitalize">{bgText(d)}</td>
             </tr>
           ))}
         </tbody>

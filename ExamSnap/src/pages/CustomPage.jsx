@@ -10,7 +10,7 @@ import { useT } from "../i18n/index.jsx";
 // exam. Validation still runs, but download may be overridden with a warning (§FR-18).
 export default function CustomPage() {
   const t = useT();
-  const [form, setForm] = useState({ width: "", height: "", minKb: "", maxKb: "" });
+  const [form, setForm] = useState({ name: "", width: "", height: "", minKb: "", maxKb: "", notifUrl: "" });
   const [exam, setExam] = useState(null);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -22,6 +22,7 @@ export default function CustomPage() {
     if (!canSubmit) return;
     setExam(
       buildCustomExam({
+        name: form.name.trim() || undefined,
         width: Number(form.width),
         height: Number(form.height),
         minKb: Number(form.minKb) || 0,
@@ -29,6 +30,8 @@ export default function CustomPage() {
       }),
     );
   };
+
+  const submitUnlisted = { name: form.name.trim(), notificationUrl: form.notifUrl.trim() };
 
   return (
     <div>
@@ -51,10 +54,38 @@ export default function CustomPage() {
 
       {!exam ? (
         <form onSubmit={submit} className="mt-5 grid grid-cols-2 gap-3 max-w-md">
+          <label className="col-span-2 text-sm">
+            <span className="block text-slate-600 mb-1">{t("custom.examName")}</span>
+            <input
+              type="text"
+              value={form.name}
+              onChange={set("name")}
+              maxLength={120}
+              placeholder="e.g. State PSC Clerk"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500"
+            />
+            <span className="mt-1 block text-xs text-slate-400">{t("custom.examNameHint")}</span>
+          </label>
+
           <Field label={t("custom.width")} value={form.width} onChange={set("width")} />
           <Field label={t("custom.height")} value={form.height} onChange={set("height")} />
           <Field label={t("custom.minKb")} value={form.minKb} onChange={set("minKb")} />
           <Field label={t("custom.maxKb")} value={form.maxKb} onChange={set("maxKb")} />
+
+          <label className="col-span-2 text-sm">
+            <span className="block text-slate-600 mb-1">{t("custom.notifUrl")}</span>
+            <input
+              type="url"
+              inputMode="url"
+              value={form.notifUrl}
+              onChange={set("notifUrl")}
+              maxLength={500}
+              placeholder="https://…"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500"
+            />
+            <span className="mt-1 block text-xs text-slate-400">{t("custom.notifHint")}</span>
+          </label>
+
           <button
             type="submit"
             disabled={!canSubmit}
@@ -76,7 +107,7 @@ export default function CustomPage() {
             </button>
           </div>
           <div className="lg:col-span-3">
-            <ClientToolFlow exam={exam} allowOverride />
+            <ClientToolFlow exam={exam} allowOverride submitUnlisted={submitUnlisted} />
           </div>
         </div>
       )}

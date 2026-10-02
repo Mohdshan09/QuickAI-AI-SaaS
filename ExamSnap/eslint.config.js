@@ -22,7 +22,8 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.{js,mjs}", "**/*.test.{js,jsx}"],
+    // Node runtime: build scripts, the migration runner and the serverless API functions.
+    files: ["scripts/**/*.{js,mjs}", "api/**/*.js", "**/*.test.{js,jsx}"],
     languageOptions: { globals: { ...globals.node } },
   },
 ];

@@ -47,6 +47,6 @@ export default defineConfig({
     // Pure-logic engine tests run in node; canvas/pipeline tests opt into browser mode
     // via their own `// @vitest-environment` or a separate project config (see tests/).
     environment: "node",
-    include: ["src/**/*.test.{js,jsx}"],
+    include: ["src/**/*.test.{js,jsx}", "api/**/*.test.js"],
   },
 });

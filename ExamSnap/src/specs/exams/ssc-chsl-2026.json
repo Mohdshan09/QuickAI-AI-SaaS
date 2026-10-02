@@ -1,0 +1,47 @@
+{
+  "id": "ssc-chsl-2026",
+  "slug": "ssc-chsl-photo-signature-size",
+  "name": "SSC CHSL",
+  "organization": "SSC",
+  "conductedBy": "SSC",
+  "posts": "LDC, JSA, DEO",
+  "cycle": "2026",
+  "popular": true,
+  "verified": true,
+  "listed": true,
+  "sourceUrl": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_cht_2026.pdf",
+  "sourcePage": "Official SSC notification, p.29",
+  "lastVerified": "2026-10-02",
+  "documents": [
+    {
+      "type": "photo",
+      "label": "Photograph (captured live)",
+      "format": "jpeg",
+      "submission": "live",
+      "background": "light",
+      "contentRules": [
+        "Camera at eye level; full frontal view",
+        "Face inside the capture area",
+        "No cap, mask or spectacles",
+        "Do not photograph a pre-existing photograph"
+      ],
+      "notes": "SSC CHSL captures the photo live in the application portal — there is no photo upload."
+    },
+    {
+      "type": "signature",
+      "label": "Signature",
+      "format": "jpeg",
+      "submission": "upload",
+      "width": "not-specified",
+      "height": "not-specified",
+      "defaultWidthPx": 300,
+      "defaultHeightPx": 100,
+      "physicalSize": { "w": 6.0, "h": 2.0, "unit": "cm" },
+      "sizeKb": { "min": 10, "max": 20 },
+      "contentRules": [
+        "Blurred or miniature signatures are rejected"
+      ],
+      "notes": "The notification states a physical size of about 6×2 cm; pixel size is not stated, so we use 300×100 px as a safe default."
+    }
+  ]
+}

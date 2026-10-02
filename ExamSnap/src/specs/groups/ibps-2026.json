@@ -1,0 +1,70 @@
+{
+  "id": "ibps-2026",
+  "_source": "Official IBPS 2026-27 Tentative Calendar — Process of Registration. File-size rules are stated by IBPS; pixel/physical dimensions were NOT stated in the cited source.",
+  "documents": [
+    {
+      "type": "photo",
+      "label": "Photograph",
+      "format": "jpeg",
+      "submission": "both",
+      "width": "not-specified",
+      "height": "not-specified",
+      "defaultWidthPx": 200,
+      "defaultHeightPx": 230,
+      "sizeKb": { "min": 20, "max": 50 },
+      "background": "not-specified",
+      "contentRules": [
+        "Recent passport-style colour photo, clearly visible",
+        "A live photograph is also captured during the application"
+      ],
+      "notes": "The official 2026-27 calendar does not state a pixel size; we use 200×230 px as a safe default."
+    },
+    {
+      "type": "signature",
+      "label": "Signature",
+      "format": "jpeg",
+      "submission": "upload",
+      "width": "not-specified",
+      "height": "not-specified",
+      "defaultWidthPx": 300,
+      "defaultHeightPx": 80,
+      "sizeKb": { "min": 10, "max": 20 },
+      "contentRules": [
+        "Clearly visible",
+        "Not in capital letters"
+      ],
+      "notes": "The official source does not state a pixel size; we use 300×80 px as a safe default."
+    },
+    {
+      "type": "thumb",
+      "label": "Left thumb impression",
+      "format": "jpeg",
+      "submission": "upload",
+      "width": "not-specified",
+      "height": "not-specified",
+      "defaultWidthPx": 240,
+      "defaultHeightPx": 240,
+      "sizeKb": { "min": 20, "max": 50 },
+      "contentRules": [
+        "Left thumb impression, clearly visible"
+      ],
+      "notes": "The official source does not state a pixel size; we use 240×240 px as a safe default."
+    },
+    {
+      "type": "declaration",
+      "label": "Handwritten declaration",
+      "format": "jpeg",
+      "submission": "upload",
+      "width": "not-specified",
+      "height": "not-specified",
+      "defaultWidthPx": 600,
+      "defaultHeightPx": 400,
+      "sizeKb": { "min": 50, "max": 100 },
+      "contentRules": [
+        "Handwritten (not typed), in running handwriting",
+        "Clearly legible"
+      ],
+      "notes": "The official source does not state a pixel size; we use 600×400 px as a safe default."
+    }
+  ]
+}

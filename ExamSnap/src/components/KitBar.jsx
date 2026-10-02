@@ -10,7 +10,7 @@ import { useT } from "../i18n/index.jsx";
 export default function KitBar({ exam, kit }) {
   const t = useT();
   const [busy, setBusy] = useState(false);
-  const total = exam.documents.length;
+  const total = (exam.processableDocuments || exam.documents).length;
 
   const downloadAll = async () => {
     setBusy(true);

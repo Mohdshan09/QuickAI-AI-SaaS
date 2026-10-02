@@ -9,15 +9,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const examsDir = join(__dirname, "..", "src", "specs", "exams");
 const base = (process.env.SITE_URL || "https://quickai.com/examsnap").replace(/\/$/, "");
 
-const slugs = ["", "custom"]; // home + custom
+const slugs = ["", "custom", "privacy"]; // home + custom + privacy
 for (const file of readdirSync(examsDir)) {
   if (!file.endsWith(".json")) continue;
   const data = JSON.parse(readFileSync(join(examsDir, file), "utf8"));
-  // A file may hold a single exam object or an array (the catalog).
+  // A file may hold a single exam object or an array.
   for (const raw of Array.isArray(data) ? data : [data]) {
+    // Only verified AND listed exams are indexable (unverified placeholders and exams whose
+    // application window isn't open yet, e.g. listed:false, stay out of the sitemap).
+    if (raw.verified !== true || raw.listed === false) continue;
     const slug = raw.slug || raw.id;
     slugs.push(slug);
-    slugs.push(`check/${slug}`); // Phase 2: per-exam checker page
+    slugs.push(`check/${slug}`); // per-exam checker page
   }
 }
 // De-dupe in case a catalog entry and a dedicated file share an id/slug.

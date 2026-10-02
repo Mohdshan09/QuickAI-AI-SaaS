@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Loader2, PartyPopper, Sparkles } from "lucide-react";
+import { Check, Info, ListChecks, Loader2, PartyPopper, Sparkles } from "lucide-react";
 import Uploader from "./Uploader.jsx";
 import Cropper from "./Cropper.jsx";
 import ResultPanel from "./ResultPanel.jsx";
@@ -8,11 +8,17 @@ import CrossPromo from "./CrossPromo.jsx";
 import SignaturePreview from "./SignaturePreview.jsx";
 import StripForm from "./StripForm.jsx";
 import KitBar from "./KitBar.jsx";
+import QualityFeedback from "./QualityFeedback.jsx";
 import { runPipeline } from "../lib/processClient.js";
 import { downloadBlob, filenameFor } from "../lib/download.js";
 import { loadKit, saveKit, clearKit } from "../lib/kitStore.js";
 import { track, EVENTS } from "../lib/analytics.js";
 import { useT } from "../i18n/index.jsx";
+import { normalizeExamName } from "../lib/normalize.js";
+import { specHash as computeSpecHash } from "../lib/specHash.js";
+import { recordDownload } from "../lib/outcomeStore.js";
+import { sendOrQueue } from "../lib/submissionQueue.js";
+import { getAnonId } from "../lib/anonId.js";
 
 const INK_TYPES = new Set(["signature", "thumb", "declaration"]);
 const defaultOptions = () => ({
@@ -24,9 +30,13 @@ const defaultOptions = () => ({
 // Drives the per-document flow for one exam (spec §7 + Phase 2 §4.2–4.5). Phase 2 adds live
 // re-processing when adjustments change, and a kit that collects each finished document for a
 // ZIP download, persisted to IndexedDB so a mid-kit return resumes.
-export default function ToolFlow({ exam, allowOverride = false, initialFile = null }) {
+export default function ToolFlow({ exam, allowOverride = false, initialFile = null, submitUnlisted = null }) {
   const t = useT();
-  const docs = exam.documents;
+  const docs = exam.processableDocuments || exam.documents;
+  const liveDocs = exam.liveDocuments || [];
+  // An unlisted/custom exam the user named → we record demand + their entered spec on download.
+  const unlistedName = submitUnlisted?.name?.trim() || "";
+  const examRef = unlistedName ? normalizeExamName(unlistedName) : exam.id;
   const [docIndex, setDocIndex] = useState(0);
   const [step, setStep] = useState("upload"); // upload | crop | processing | result | done
   const [file, setFile] = useState(null);
@@ -120,12 +130,43 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
     downloadBlob(result.blob, item.filename);
     track(EVENTS.DOWNLOAD, { exam: exam.slug, doc: doc.type });
 
+    // Record this download locally so the next-visit outcome prompt can ask about it (spec §8.2),
+    // and gate outcome reporting to specs the user actually processed. Non-blocking, no image data.
+    const specHashVal = computeSpecHash(exam.processableDocuments || exam.documents);
+    recordDownload({
+      examRef,
+      examName: unlistedName || exam.name,
+      specHash: specHashVal,
+      documentTypes: nextKit.map((k) => k.docType),
+      slug: exam.slug,
+      sourceUrl: exam.sourceUrl || "",
+    });
+
     if (docIndex + 1 < docs.length) {
       setDocIndex((i) => i + 1);
       reset();
       setStep("upload");
     } else {
       track(EVENTS.KIT_COMPLETED, { exam: exam.slug, count: nextKit.length });
+      // Unlisted exam processed → record the demand and the user-entered spec (spec §FR-C9).
+      if (unlistedName) {
+        const documents = (exam.processableDocuments || exam.documents).map((d) => ({
+          type: d.type,
+          width: d.width ?? null,
+          height: d.height ?? null,
+          minKb: d.minKb ?? 0,
+          maxKb: Number.isFinite(d.maxKb) ? d.maxKb : null,
+        }));
+        const anonId = getAnonId();
+        sendOrQueue("exam-requests", { name: unlistedName, anonId });
+        sendOrQueue("spec-submissions", {
+          examName: unlistedName,
+          documents,
+          notificationUrl: submitUnlisted?.notificationUrl?.trim() || null,
+          specHash: specHashVal,
+          anonId,
+        });
+      }
       setStep("done");
     }
   };
@@ -142,6 +183,8 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
 
   return (
     <div className="mt-5">
+      {liveDocs.length > 0 && <LiveDocsNote docs={liveDocs} />}
+
       {/* Document progress — each chip is clickable so you can switch documents freely. */}
       <ol className="flex flex-wrap gap-2 mb-4">
         {docs.map((d, i) => {
@@ -168,6 +211,10 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
           );
         })}
       </ol>
+
+      {doc?.contentRules?.length > 0 && (step === "upload" || step === "result") && (
+        <ContentChecklist docLabel={doc.label} rules={doc.contentRules} />
+      )}
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
@@ -248,6 +295,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
             <PartyPopper className="w-5 h-5" aria-hidden />
             {t("result.done")}
           </p>
+          <QualityFeedback examRef={examRef} documentTypes={kit.map((k) => k.docType)} />
           <Link
             to="/"
             onClick={finishKit}
@@ -261,6 +309,43 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
 
       {/* Kit: ready count, per-file + ZIP download (persists across the flow). */}
       {step !== "crop" && <KitBar exam={exam} kit={kit} />}
+    </div>
+  );
+}
+
+// Documents this exam captures live in the official portal — no upload here, shown for context.
+function LiveDocsNote({ docs }) {
+  const t = useT();
+  return (
+    <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold text-sky-800">
+        <Info className="w-4 h-4 shrink-0" aria-hidden />
+        {t("live.title")}
+      </p>
+      <p className="mt-1 text-sm text-sky-700">
+        {t("live.body", { docs: docs.map((d) => d.label.replace(/\s*\(captured live\)/i, "")).join(", ") })}
+      </p>
+    </div>
+  );
+}
+
+// User-facing checklist of the official content rules for the current document (spec §content).
+function ContentChecklist({ docLabel, rules }) {
+  const t = useT();
+  return (
+    <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <ListChecks className="w-4 h-4 shrink-0 text-slate-500" aria-hidden />
+        {t("rules.title", { doc: docLabel })}
+      </p>
+      <ul className="mt-2 space-y-1 text-sm text-slate-600">
+        {rules.map((r, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-green-600" aria-hidden />
+            {r}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

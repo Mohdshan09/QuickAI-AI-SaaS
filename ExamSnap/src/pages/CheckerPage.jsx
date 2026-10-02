@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Head, ClientOnly } from "vite-react-ssg";
 import { CheckCircle2, XCircle, AlertTriangle, Wrench } from "lucide-react";
-import { getExamBySlug, getExams } from "../specs/loadSpecs.js";
+import { getExamBySlug, getListedExams } from "../specs/loadSpecs.js";
 import SpecTable from "../components/SpecTable.jsx";
 import Uploader from "../components/Uploader.jsx";
 import ClientToolFlow from "../components/ClientToolFlow.jsx";
@@ -138,5 +138,5 @@ function Checker({ exam, doc }) {
 
 // Prerender a checker page per exam (parallel to the exam pages).
 export function getStaticPaths() {
-  return getExams().map((e) => `/check/${e.slug}`);
+  return getListedExams().map((e) => `/check/${e.slug}`);
 }

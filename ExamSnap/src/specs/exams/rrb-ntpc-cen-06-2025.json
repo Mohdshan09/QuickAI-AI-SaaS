@@ -1,0 +1,50 @@
+{
+  "id": "rrb-ntpc-cen-06-2025",
+  "slug": "rrb-ntpc-photo-signature-size",
+  "name": "RRB NTPC",
+  "organization": "RRB",
+  "conductedBy": "Railway Recruitment Boards",
+  "posts": "Graduate-level railway posts",
+  "cycle": "CEN 06/2025",
+  "popular": true,
+  "verified": true,
+  "listed": false,
+  "sourceUrl": "https://www.rrbcdg.gov.in/uploads/2025/06-NTPCG/062025NTPCG-ApplicationFAQs.pdf",
+  "sourcePage": "Official RRB FAQ, p.15; CEN 06/2025 para 14.5.1",
+  "lastVerified": "2026-10-02",
+  "_note": "verified:true but listed:false — kept out of listing/prerender/sitemap until the application window is confirmed open. Flip listed:true and redeploy to publish.",
+  "documents": [
+    {
+      "type": "photo",
+      "label": "Photograph (captured live)",
+      "format": "jpeg",
+      "submission": "live",
+      "contentRules": [
+        "The official FAQ specifies a live-photo process",
+        "Do not substitute a pre-existing photo where live capture is required"
+      ],
+      "notes": "RRB NTPC captures the photo live — there is no photo upload."
+    },
+    {
+      "type": "signature",
+      "label": "Signature",
+      "format": "jpeg",
+      "submission": "upload",
+      "width": { "minPx": 140 },
+      "height": { "minPx": 60 },
+      "defaultWidthPx": 140,
+      "defaultHeightPx": 60,
+      "physicalSize": { "w": 35, "h": 20, "unit": "mm" },
+      "minDpi": 100,
+      "sizeKb": { "min": 30, "max": 49 },
+      "ink": "Black ink on white paper",
+      "contentRules": [
+        "Running handwriting / cursive",
+        "Not BLOCK, CAPITAL or disjoined letters",
+        "Signature centred in the 35×20 mm scan box",
+        "Minimum 100 DPI"
+      ],
+      "notes": "Minimum 140×60 px, 35×20 mm scan box, at least 100 DPI."
+    }
+  ]
+}

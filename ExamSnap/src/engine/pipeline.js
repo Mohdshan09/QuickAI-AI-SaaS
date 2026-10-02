@@ -12,6 +12,7 @@ import { resizeToSpec, scaleCanvas, SHARPEN } from "./resize.js";
 import { compressToRange } from "./compress.js";
 import { validate } from "./validate.js";
 import { encodeJpeg } from "./canvasEnv.js";
+import { setJpegDpiBlob } from "./encode/jfifDpi.js";
 import { cleanSignature } from "./steps/signatureClean.js";
 import { checkBackground } from "./steps/background/check.js";
 import { brightenBackground } from "./steps/background/brighten.js";
@@ -86,7 +87,7 @@ export async function run(ctx) {
   }
 
   // 7. compress
-  const { blob, quality, sizeKb, note, withinHardRange, padded } = await compressToRange(sized, {
+  const { blob, quality, note, withinHardRange, padded } = await compressToRange(sized, {
     encode: encodeJpeg,
     scaleCanvas,
     minKb: docSpec.minKb ?? 0,
@@ -94,13 +95,22 @@ export async function run(ctx) {
     allowDimensionStepDown: Boolean(docSpec.allowDimensionStepDown),
   });
 
+  // 7b. stamp JPEG density when the spec gives a physical size and/or a minimum DPI. Pixels are
+  // unchanged; only the JFIF header density is written (spec: RRB NTPC ≥100 DPI, SSC CHSL 6×2 cm).
+  let outBlob = blob;
+  const dpi = resolveDpi(docSpec, sized.width);
+  if (dpi > 0) {
+    outBlob = await setJpegDpiBlob(blob, dpi);
+    meta.dpi = dpi;
+  }
+
   Object.assign(meta, {
-    sizeBytes: blob.size,
+    sizeBytes: outBlob.size,
     width: sized.width,
     height: sized.height,
     format: "jpeg",
     quality,
-    sizeKb,
+    sizeKb: Math.round((outBlob.size / 1024) * 10) / 10,
     note,
     withinHardRange,
     padded: Boolean(padded),
@@ -108,5 +118,15 @@ export async function run(ctx) {
 
   // 8. validate
   const validation = validate(meta, docSpec);
-  return { blob, meta, validation };
+  return { blob: outBlob, meta, validation };
+}
+
+// Density to stamp: the larger of the spec's minimum DPI and the DPI implied by the output
+// width over the required physical width (so a physical-size signature reads at a sane density).
+function resolveDpi(docSpec, outWidthPx) {
+  let dpi = 0;
+  const cmW = docSpec.physicalSize?.w; // physicalSize is already normalised to cm in loadSpecs
+  if (cmW > 0 && outWidthPx > 0) dpi = Math.round(outWidthPx / (cmW / 2.54));
+  if (docSpec.minDpi > 0) dpi = Math.max(dpi, docSpec.minDpi);
+  return dpi;
 }
