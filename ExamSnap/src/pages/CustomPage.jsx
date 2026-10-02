@@ -6,27 +6,34 @@ import ClientToolFlow from "../components/ClientToolFlow.jsx";
 import SpecTable from "../components/SpecTable.jsx";
 import { useT } from "../i18n/index.jsx";
 
-// Custom mode (spec §FR-4): the user enters width, height and the KB range for an unlisted
-// exam. Validation still runs, but download may be overridden with a warning (§FR-18).
+// Custom mode (spec §FR-4). KB-first: most users only know the KB limit, so they pick a
+// document type (which sets a safe default size) and enter the KB range. Exact pixels are
+// optional (advanced) for exams that specify them. Validation still runs; download may be
+// overridden with a warning (§FR-18).
 export default function CustomPage() {
   const t = useT();
-  const [form, setForm] = useState({ name: "", width: "", height: "", minKb: "", maxKb: "", notifUrl: "" });
+  const [form, setForm] = useState({
+    name: "", type: "photo", minKb: "", maxKb: "", width: "", height: "", notifUrl: "",
+  });
+  const [showPx, setShowPx] = useState(false);
   const [exam, setExam] = useState(null);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const canSubmit = Number(form.width) > 0 && Number(form.height) > 0 && Number(form.maxKb) > 0;
+  // Only the max KB is required; pixels are optional.
+  const canSubmit = Number(form.maxKb) > 0;
 
   const submit = (e) => {
     e.preventDefault();
     if (!canSubmit) return;
+    const hasPx = Number(form.width) > 0 && Number(form.height) > 0;
     setExam(
       buildCustomExam({
         name: form.name.trim() || undefined,
-        width: Number(form.width),
-        height: Number(form.height),
+        type: form.type,
         minKb: Number(form.minKb) || 0,
         maxKb: Number(form.maxKb),
+        ...(hasPx ? { width: Number(form.width), height: Number(form.height) } : {}),
       }),
     );
   };
@@ -39,7 +46,7 @@ export default function CustomPage() {
         <title>Custom photo & signature size — ExamSnap by Quick AI</title>
         <meta
           name="description"
-          content="Enter any width, height and KB range to resize and compress a photo or signature to exact specs, free and on your device."
+          content="Just enter your exam's KB size and we'll resize and compress your photo or signature to fit — free, on your device. Pixel size optional."
         />
       </Head>
 
@@ -67,10 +74,45 @@ export default function CustomPage() {
             <span className="mt-1 block text-xs text-slate-400">{t("custom.examNameHint")}</span>
           </label>
 
-          <Field label={t("custom.width")} value={form.width} onChange={set("width")} />
-          <Field label={t("custom.height")} value={form.height} onChange={set("height")} />
+          <fieldset className="col-span-2">
+            <legend className="text-sm text-slate-600 mb-1">{t("custom.type")}</legend>
+            <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+              {["photo", "signature"].map((ty) => (
+                <button
+                  key={ty}
+                  type="button"
+                  aria-pressed={form.type === ty}
+                  onClick={() => setForm((f) => ({ ...f, type: ty }))}
+                  className={`px-4 py-2 text-sm ${
+                    form.type === ty ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {t(ty === "photo" ? "custom.typePhoto" : "custom.typeSignature")}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
           <Field label={t("custom.minKb")} value={form.minKb} onChange={set("minKb")} />
           <Field label={t("custom.maxKb")} value={form.maxKb} onChange={set("maxKb")} />
+
+          {/* Pixels are optional — only exams that state an exact pixel size need them. */}
+          <div className="col-span-2">
+            <button
+              type="button"
+              onClick={() => setShowPx((v) => !v)}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {showPx ? "− " : "+ "}{t("custom.pxToggle")}
+            </button>
+            {showPx && (
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                <Field label={t("custom.width")} value={form.width} onChange={set("width")} />
+                <Field label={t("custom.height")} value={form.height} onChange={set("height")} />
+                <span className="col-span-2 text-xs text-slate-400">{t("custom.pxHint")}</span>
+              </div>
+            )}
+          </div>
 
           <label className="col-span-2 text-sm">
             <span className="block text-slate-600 mb-1">{t("custom.notifUrl")}</span>

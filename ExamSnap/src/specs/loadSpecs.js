@@ -226,8 +226,25 @@ export function getExamBySlug(slug) {
   return getExams().find((e) => e.slug === slug);
 }
 
-/** Build a one-document resolved exam from Custom-mode user input. */
+// Labelled default pixel sizes for KB-only custom specs, by document type. Most users only
+// know the KB limit, not an exact pixel size, so Custom mode defaults to these and simply
+// compresses to the KB range (pixels stay optional — see CustomPage).
+const CUSTOM_DEFAULT_PX = {
+  photo: { w: 200, h: 230 },
+  signature: { w: 300, h: 80 },
+};
+
+/**
+ * Build a one-document resolved exam from Custom-mode user input. `width`/`height` are OPTIONAL:
+ * when omitted (the common case), the document is KB-only and uses the labelled default size for
+ * its type, so the user only has to enter the KB range.
+ */
 export function buildCustomExam({ width, height, minKb, maxKb, type = "photo", label, name }) {
+  const hasDims = Number(width) > 0 && Number(height) > 0;
+  const def = CUSTOM_DEFAULT_PX[type] || CUSTOM_DEFAULT_PX.photo;
+  const dims = hasDims
+    ? { width: { px: Math.round(width) }, height: { px: Math.round(height) } }
+    : { width: "not-specified", height: "not-specified", defaultWidthPx: def.w, defaultHeightPx: def.h };
   return resolveExam({
     id: "custom",
     slug: "custom",
@@ -240,11 +257,10 @@ export function buildCustomExam({ width, height, minKb, maxKb, type = "photo", l
     documents: [
       {
         type,
-        label: label || "Custom document",
+        label: label || (type === "signature" ? "Signature" : "Photograph"),
         format: "jpeg",
         submission: "upload",
-        width: { px: Math.round(width) },
-        height: { px: Math.round(height) },
+        ...dims,
         sizeKb: { min: Number(minKb) || 0, max: Number(maxKb) || Infinity },
         background: "white",
       },
