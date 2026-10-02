@@ -1,7 +1,16 @@
 {
   "rewrites": [
-    { "source": "/examsnap", "destination": "https://REPLACE-WITH-EXAMSNAP-DOMAIN/examsnap" },
-    { "source": "/examsnap/(.*)", "destination": "https://REPLACE-WITH-EXAMSNAP-DOMAIN/examsnap/$1" },
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/examsnap",
+      "destination": "https://exam-snap-drab.vercel.app/examsnap"
+    },
+    {
+      "source": "/examsnap/(.*)",
+      "destination": "https://exam-snap-drab.vercel.app/examsnap/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
   ]
 }
