@@ -11,6 +11,7 @@ import {
   LogOut,
   Briefcase,
   FileUser,
+  Camera,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useEntitlements } from "../lib/useEntitlements.js";
@@ -98,6 +99,16 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               )}
             </NavLink>
           ))}
+
+          {/* ExamSnap is a separate app under /examsnap/ — a real anchor (full navigation
+              through the Vercel rewrite), not a react-router NavLink. */}
+          <a
+            href="https://quick-ai-frontend-zeta.vercel.app/examsnap/"
+            className="px-3.5 py-2.5 flex items-center gap-3 rounded font-semibold text-gray-800 hover:bg-gray-50"
+          >
+            <Camera className="w-4 h-4" />
+            ExamSnap
+          </a>
         </div>
       </div>
       <div className="w-full border-t border-gray-200 p-4 px-7 flex items-center justify-between ">
