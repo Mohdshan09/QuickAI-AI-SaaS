@@ -1,0 +1,42 @@
+{
+  "name": "examsnap",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ExamSnap by Quick AI — exam-ready photo & signature in 30 seconds. Fully client-side.",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/gen-sitemap.mjs && vite-react-ssg build",
+    "build:vercel": "npm run build && node scripts/nest-dist.mjs",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "heic2any": "^0.0.4",
+    "lucide-react": "^0.540.0",
+    "pica": "^10.0.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-easy-crop": "^5.5.0",
+    "react-router-dom": "^6.26.0",
+    "vite-react-ssg": "^0.9.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@tailwindcss/vite": "^4.1.12",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.3.0",
+    "tailwindcss": "^4.1.12",
+    "vite": "^7.3.0",
+    "vite-plugin-pwa": "^1.0.1",
+    "vitest": "^3.2.4"
+  },
+  "comments": {
+    "lazy-deps": "heic2any (HEIC convert) and client-zip (P2 Download-all) are loaded via dynamic import() on demand to keep the initial bundle small; add them with `npm i heic2any client-zip` when wiring those paths."
+  }
+}

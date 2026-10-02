@@ -15,10 +15,12 @@ export const PACK_KEYS = {
 export const CREDIT_PACKS = {
   SMALL: {
     key: "SMALL",
-    name: "5 Credits",
+    // Sized to a multiple of 6 (= LCM of the Match=2 / Tailor=3 costs) so it maps
+    // cleanly to "3 Match Scores or 2 Tailored Resumes" with no odd leftover.
+    name: "6 Credits",
     description: "A small top-up for occasional use.",
-    credits: 5,
-    price: 49,
+    credits: 6,
+    price: 9,
     currency: "INR",
     isActive: true,
   },

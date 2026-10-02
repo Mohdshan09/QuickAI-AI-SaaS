@@ -1,0 +1,6 @@
+{
+  "_note": "Hindi translations — Phase 2 fast-follow. Keys mirror en.json exactly; fill values and the UI switches with no code change. Until a key is translated the app falls back to English.",
+  "brand": "ExamSnap",
+  "brandBy": "Quick AI द्वारा",
+  "tagline": "30 सेकंड में परीक्षा-तैयार फ़ोटो और हस्ताक्षर"
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Coins,
   FileText,
   Gem,
   Hash,
@@ -13,6 +14,7 @@ import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useEntitlements } from "../lib/useEntitlements.js";
+import { useCredits } from "../lib/useCredits.js";
 import { useSubscription } from "../lib/useSubscription.js";
 import { useCreditHistory } from "../lib/useCreditHistory.js";
 import { usePayments } from "../lib/usePayments.js";
@@ -102,6 +104,8 @@ const Dashboard = () => {
 
   // Authoritative plan + monthly usage from the backend (display-only).
   const { plan, features, loading: entLoading } = useEntitlements();
+  // Live credit wallet balance (display-only; backend is authoritative).
+  const { balance: creditBalance, refresh: refreshCredits } = useCredits();
   // Current subscription + the only user actions in Phase 5: cancel / resume renewal.
   const { subscription, cancel, resume } = useSubscription();
   // Recent credit ledger activity across all sources (purchases, grants, usage) — spec §32.
@@ -176,7 +180,7 @@ const Dashboard = () => {
     <div className="h-full overflow-y-scroll p-6">
       {/* Discreet top-up action, top-right (Phase 6/7). Opens the pack picker on demand. */}
       <div className="flex justify-end mb-4">
-        <BuyCredits onPaid={() => { refreshPayments(); refreshHistory(); }} />
+        <BuyCredits onPaid={() => { refreshPayments(); refreshHistory(); refreshCredits(); }} />
       </div>
 
       <div className="flex justify-start gap-4 flex-wrap">
@@ -202,6 +206,19 @@ const Dashboard = () => {
           </div>
           <div className="w-10 h-10 rounded-lg  bg-gradient-to-br from-[#FF61C5] to-[#9E53EE] text-white flex justify-center items-center">
             <Gem className="w-5 text-white " />
+          </div>
+        </div>
+
+        {/* Credit balance — the live wallet balance (top-ups land here). */}
+        <div className="flex justify-between items-center w-72 p-4 px-6 bg-white rounded-xl border border-gray-200">
+          <div className="text-slate-600">
+            <p className="text-sm">Credits</p>
+            <h2 className="text-xl font-semibold">
+              {creditBalance == null ? "…" : creditBalance}
+            </h2>
+          </div>
+          <div className="w-10 h-10 rounded-lg  bg-gradient-to-br from-[#F59E0B] to-[#F97316] text-white flex justify-center items-center">
+            <Coins className="w-5 text-white " />
           </div>
         </div>
       </div>

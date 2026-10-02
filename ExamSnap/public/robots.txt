@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /examsnap/
+
+Sitemap: https://quickai.com/examsnap/sitemap.xml

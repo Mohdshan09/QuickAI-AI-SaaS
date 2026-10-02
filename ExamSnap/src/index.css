@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Mobile-first defaults: comfortable tap targets, no horizontal scroll at 360px. */
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* Keep interactive controls at least 44px tall for one-handed use. */
+button,
+[role="button"],
+input,
+select {
+  min-height: 44px;
+}
