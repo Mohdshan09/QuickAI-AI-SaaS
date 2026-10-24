@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const examsDir = join(__dirname, "..", "src", "specs", "exams");
-const base = (process.env.SITE_URL || "https://quickai.com/examsnap").replace(/\/$/, "");
+const base = (process.env.SITE_URL || "https://quick-ai-frontend-zeta.vercel.app/examsnap").replace(/\/$/, "");
 
 const slugs = ["", "custom", "privacy"]; // home + custom + privacy
 for (const file of readdirSync(examsDir)) {

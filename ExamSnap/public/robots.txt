@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /examsnap/
 
-Sitemap: https://quickai.com/examsnap/sitemap.xml
+Sitemap: https://quick-ai-frontend-zeta.vercel.app/examsnap/sitemap.xml
