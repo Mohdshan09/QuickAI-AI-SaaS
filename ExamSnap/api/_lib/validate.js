@@ -33,3 +33,12 @@ export function validateNotificationUrl(url) {
 export function cap(str, n) {
   return str == null ? null : String(str).slice(0, n);
 }
+
+/** Keep anonymous discussion public but free of contact details and link spam. */
+export function validateComment(alias, body) {
+  if (typeof alias !== "string" || !alias.trim() || alias.trim().length > 32) return "alias must be 1–32 characters";
+  if (typeof body !== "string" || !body.trim() || body.trim().length > 1000) return "comment must be 1–1000 characters";
+  if (/https?:\/\/|www\.|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/i.test(body)) return "links and email addresses are not allowed";
+  if (/\b(?:\+?\d[\s-]?){10,}\b/.test(body)) return "phone numbers are not allowed";
+  return null;
+}

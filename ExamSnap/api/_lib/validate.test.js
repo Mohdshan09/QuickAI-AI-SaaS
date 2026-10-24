@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateSpecDocuments, validateNotificationUrl, cap } from "./validate.js";
+import { validateSpecDocuments, validateNotificationUrl, validateComment, cap } from "./validate.js";
 
 describe("validateSpecDocuments", () => {
   it("accepts a valid KB-only document set", () => {
@@ -36,5 +36,13 @@ describe("cap", () => {
   it("truncates to length and passes null through", () => {
     expect(cap("abcdef", 3)).toBe("abc");
     expect(cap(null, 3)).toBeNull();
+  });
+});
+
+describe("validateComment", () => {
+  it("accepts plain text and rejects contact details", () => {
+    expect(validateComment("Exam Buddy", "The photo upload opened for me today.")).toBeNull();
+    expect(validateComment("Exam Buddy", "See https://example.com")).toMatch(/links/);
+    expect(validateComment("Exam Buddy", "Call 9876543210")).toMatch(/phone/);
   });
 });

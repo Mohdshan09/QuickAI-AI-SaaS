@@ -9,6 +9,30 @@ import { specHash } from "./_lib/specHash.js";
 import { validateSpecDocuments, validateNotificationUrl, cap } from "./_lib/validate.js";
 
 export default async function handler(req, res) {
+  // Community presets are intentionally returned only for an exact normalised exam-name
+  // match. This avoids turning this endpoint into a public database search API.
+  if (req.method === "GET") {
+    const examName = cap(req.query?.examName, 120);
+    const normalized = normalizeExamName(examName);
+    if (!normalized || normalized.length < 3) return json(res, 200, { presets: [] });
+
+    const sql = getSql();
+    const rows = await sql`
+      SELECT documents, spec_hash, MIN(notification_url) AS source_url, COUNT(*)::int AS uses
+      FROM spec_submissions
+      WHERE normalized = ${normalized}
+      GROUP BY documents, spec_hash
+      ORDER BY uses DESC, MAX(created_at) DESC
+      LIMIT 5`;
+    return json(res, 200, {
+      presets: rows.map((row) => ({
+        documents: row.documents,
+        uses: Number(row.uses) || 0,
+        sourceUrl: row.source_url,
+      })),
+    });
+  }
+
   if (req.method !== "POST") return json(res, 405, { error: "method not allowed" });
 
   let body;
@@ -32,6 +56,7 @@ export default async function handler(req, res) {
 
   const normalized = normalizeExamName(examName);
   if (!normalized) return json(res, 400, { error: "examName not usable" });
+  if (!body.notificationUrl) return json(res, 400, { error: "an official notificationUrl is required for a community preset" });
 
   // Store a minimal, canonical document set (no extra client fields).
   const documents = body.documents.map((d) => ({

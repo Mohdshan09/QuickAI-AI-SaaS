@@ -2,6 +2,7 @@ import { Head } from "vite-react-ssg";
 import { getListedExams } from "../specs/loadSpecs.js";
 import ExamPicker from "../components/ExamPicker.jsx";
 import ExamDropdown from "../components/ExamDropdown.jsx";
+import RecentExams from "../components/RecentExams.jsx";
 import { useT } from "../i18n/index.jsx";
 
 export default function Home() {
@@ -29,6 +30,8 @@ export default function Home() {
           <ExamDropdown />
         </div>
       </div>
+
+      <RecentExams />
 
       <div className="mt-8">
         <ExamPicker exams={exams} />

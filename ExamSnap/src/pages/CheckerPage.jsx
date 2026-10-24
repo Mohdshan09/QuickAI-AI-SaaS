@@ -27,7 +27,6 @@ export default function CheckerPage() {
     );
   }
 
-  const doc = exam.documents[0];
   const title = `Check your ${exam.name} photo & signature — ExamSnap`;
 
   return (
@@ -52,19 +51,29 @@ export default function CheckerPage() {
           <SpecTable exam={exam} />
         </div>
         <div className="lg:col-span-3">
-          <ClientOnly>{() => <Checker exam={exam} doc={doc} />}</ClientOnly>
+          <ClientOnly>{() => <Checker exam={exam} />}</ClientOnly>
         </div>
       </div>
     </div>
   );
 }
 
-function Checker({ exam, doc }) {
+function Checker({ exam }) {
   const t = useT();
+  const docs = exam.processableDocuments?.length ? exam.processableDocuments : exam.documents;
+  const [docIndex, setDocIndex] = useState(0);
   const [file, setFile] = useState(null);
   const [report, setReport] = useState(null);
   const [busy, setBusy] = useState(false);
   const [fixing, setFixing] = useState(false);
+  const doc = docs[docIndex];
+
+  const selectDoc = (index) => {
+    setDocIndex(index);
+    setFile(null);
+    setReport(null);
+    setFixing(false);
+  };
 
   useEffect(() => {
     if (!file) return;
@@ -91,6 +100,24 @@ function Checker({ exam, doc }) {
 
   return (
     <div>
+      {docs.length > 1 && (
+        <fieldset className="mb-4">
+          <legend className="mb-2 text-sm font-medium text-slate-700">Which rejected file do you want to check?</legend>
+          <div className="flex flex-wrap gap-2">
+            {docs.map((item, index) => (
+              <button
+                key={item.type}
+                type="button"
+                aria-pressed={docIndex === index}
+                onClick={() => selectDoc(index)}
+                className={`rounded-full px-3 py-1.5 text-sm ${docIndex === index ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
       <Uploader onFile={setFile} docLabel={t("checker.upload")} />
       {busy && <p className="mt-4 text-center text-slate-500">{t("upload.processing")}</p>}
 
@@ -127,7 +154,7 @@ function Checker({ exam, doc }) {
               className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 font-medium text-white"
             >
               <Wrench className="w-4 h-4" aria-hidden />
-              {t("checker.fixIt")}
+              Fix this {doc.label.toLowerCase()}
             </button>
           )}
         </div>

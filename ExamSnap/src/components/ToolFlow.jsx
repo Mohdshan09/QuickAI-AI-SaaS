@@ -47,6 +47,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
   const [options, setOptions] = useState(defaultOptions());
   const [lastCrop, setLastCrop] = useState(null);
   const [kit, setKit] = useState([]);
+  const [checklistAcknowledged, setChecklistAcknowledged] = useState(false);
 
   const doc = docs[docIndex];
   const isInk = INK_TYPES.has(doc.type);
@@ -58,6 +59,12 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
     loadKit(exam.slug).then((saved) => saved.length && setKit(saved));
     if (initialFile) handleFile(initialFile);
   }, [exam.slug]);
+
+  // Each document has different official conditions, so make the student review the relevant
+  // checklist before opening the picker. This resets when they switch document or exam.
+  useEffect(() => {
+    setChecklistAcknowledged(false);
+  }, [docIndex, exam.slug]);
 
   useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl]);
   useEffect(() => () => originalUrl && URL.revokeObjectURL(originalUrl), [originalUrl]);
@@ -212,13 +219,17 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
         })}
       </ol>
 
-      {doc?.contentRules?.length > 0 && (step === "upload" || step === "result") && (
+      {step === "upload" && (
+        <PreSubmitChecklist doc={doc} checked={checklistAcknowledged} onChange={setChecklistAcknowledged} />
+      )}
+
+      {doc?.contentRules?.length > 0 && step === "result" && (
         <ContentChecklist docLabel={doc.label} rules={doc.contentRules} />
       )}
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
-      {step === "upload" && <Uploader onFile={handleFile} docLabel={doc.label} />}
+      {step === "upload" && checklistAcknowledged && <Uploader onFile={handleFile} docLabel={doc.label} />}
 
       {step === "crop" && file && (
         <Cropper
@@ -330,6 +341,50 @@ function LiveDocsNote({ docs }) {
 }
 
 // User-facing checklist of the official content rules for the current document (spec §content).
+// A single, actionable checklist before an upload. It combines file constraints with the
+// official appearance rules so a student can catch common portal rejections before processing.
+function PreSubmitChecklist({ doc, checked, onChange }) {
+  const size = doc.sizeSpecified
+    ? `${doc.minKb > 0 ? `${doc.minKb}–` : "up to "}${Number.isFinite(doc.maxKb) ? `${doc.maxKb} KB` : "the stated limit"}`
+    : "No official KB limit is listed";
+  const dimensions = doc.dimensionSpecified
+    ? `${doc.width} × ${doc.height}px`
+    : "No exact pixel size is listed";
+  const basics = [
+    `Use a ${doc.format?.toUpperCase() || "JPEG"} / JPG image.`,
+    `${doc.label}: ${dimensions}.`,
+    `${doc.label}: ${size}.`,
+  ];
+  if (doc.background && doc.background !== "not-specified") basics.push(`Use a ${doc.background} background.`);
+
+  return (
+    <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold text-blue-950">
+        <ListChecks className="w-4 h-4 shrink-0 text-blue-700" aria-hidden />
+        Before uploading your {doc.label.toLowerCase()}
+      </p>
+      <ul className="mt-2 space-y-1.5 text-sm text-blue-950">
+        {[...basics, ...(doc.contentRules || [])].map((rule, index) => (
+          <li key={index} className="flex items-start gap-2">
+            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-700" aria-hidden />
+            {rule}
+          </li>
+        ))}
+      </ul>
+      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-blue-200 bg-white p-3 text-sm font-medium text-slate-800">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+          className="h-5 w-5 shrink-0 cursor-pointer accent-blue-600"
+        />
+        <span>I have checked these requirements and understand that the official notification is final.</span>
+      </label>
+      {!checked && <p className="mt-2 text-xs text-blue-800">Tick the box to continue to the upload.</p>}
+    </div>
+  );
+}
+
 function ContentChecklist({ docLabel, rules }) {
   const t = useT();
   return (

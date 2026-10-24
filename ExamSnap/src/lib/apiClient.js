@@ -13,3 +13,10 @@ export async function postJson(endpoint, body) {
   if (!res.ok) throw new Error(`API ${endpoint} failed: ${res.status}`);
   return res.json().catch(() => ({}));
 }
+
+/** Fetch JSON from an ExamSnap API endpoint. */
+export async function getJson(endpoint) {
+  const res = await fetch(API_BASE + endpoint);
+  if (!res.ok) throw new Error(`API ${endpoint} failed: ${res.status}`);
+  return res.json().catch(() => ({}));
+}
