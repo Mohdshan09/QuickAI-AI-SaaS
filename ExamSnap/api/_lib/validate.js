@@ -38,7 +38,10 @@ export function cap(str, n) {
 export function validateComment(alias, body) {
   if (typeof alias !== "string" || !alias.trim() || alias.trim().length > 32) return "alias must be 1–32 characters";
   if (typeof body !== "string" || !body.trim() || body.trim().length > 1000) return "comment must be 1–1000 characters";
-  if (/https?:\/\/|www\.|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/i.test(body)) return "links and email addresses are not allowed";
+  // URL: http(s):// or www. followed immediately by a word character (prevents false positive on plain "www.")
+  if (/https?:\/\/|www\.\w/i.test(body)) return "links and email addresses are not allowed";
+  // Email: requires user@domain.tld — needs @ with domain and 2+ char TLD
+  if (/\b[\w.+-]{1,64}@[\w-]+\.[\w.-]{2,}\b/i.test(body)) return "links and email addresses are not allowed";
   if (/\b(?:\+?\d[\s-]?){10,}\b/.test(body)) return "phone numbers are not allowed";
   return null;
 }

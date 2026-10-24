@@ -45,4 +45,17 @@ describe("validateComment", () => {
     expect(validateComment("Exam Buddy", "See https://example.com")).toMatch(/links/);
     expect(validateComment("Exam Buddy", "Call 9876543210")).toMatch(/phone/);
   });
+
+  it("accepts exam names and abbreviations with dots (regression: SSC.CGL, etc.)", () => {
+    expect(validateComment("Ravi", "I applied for SSC.CGL yesterday.")).toBeNull();
+    expect(validateComment("Priya", "The UPSC.CSE form is now available.")).toBeNull();
+    expect(validateComment("Amit", "Photo should be between 20–50 KB.")).toBeNull();
+  });
+
+  it("still blocks actual URLs and emails", () => {
+    expect(validateComment("a", "Visit www.example.com for info")).toMatch(/links/);
+    expect(validateComment("a", "See http://example.com")).toMatch(/links/);
+    expect(validateComment("a", "mail me at user@example.com")).toMatch(/links/);
+  });
 });
+
