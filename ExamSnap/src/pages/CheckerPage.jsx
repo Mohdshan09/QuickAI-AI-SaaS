@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Head, ClientOnly } from "vite-react-ssg";
 import { CheckCircle2, XCircle, AlertTriangle, Wrench } from "lucide-react";
 import { getExamBySlug, getListedExams } from "../specs/loadSpecs.js";
-import SpecTable from "../components/SpecTable.jsx";
+import SpecTable, { SpecWarning } from "../components/SpecTable.jsx";
 import Uploader from "../components/Uploader.jsx";
 import ClientToolFlow from "../components/ClientToolFlow.jsx";
 import { track, EVENTS } from "../lib/analytics.js";
@@ -46,11 +46,15 @@ export default function CheckerPage() {
       </nav>
       <h1 className="text-2xl font-bold text-slate-900">{t("checker.title", { exam: exam.name })}</h1>
 
+      {!exam.verified && (
+        <SpecWarning className="mt-4 rounded-xl border border-amber-200 sm:hidden" />
+      )}
+
       <div className="mt-5 grid gap-6 lg:grid-cols-5 items-start">
-        <div className="lg:col-span-2 lg:sticky lg:top-20">
+        <div className="order-2 min-w-0 lg:order-1 lg:col-span-2 lg:sticky lg:top-20">
           <SpecTable exam={exam} />
         </div>
-        <div className="lg:col-span-3">
+        <div className="order-1 min-w-0 lg:order-2 lg:col-span-3">
           <ClientOnly>{() => <Checker exam={exam} />}</ClientOnly>
         </div>
       </div>
@@ -128,12 +132,12 @@ function Checker({ exam }) {
           </p>
           <ul className="mt-3 space-y-1">
             {report.hard.checks.map((c) => (
-              <li key={c.rule} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  {c.ok ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
+              <li key={c.rule} className="flex items-start justify-between gap-3 text-sm">
+                <span className="flex min-w-0 items-start gap-2">
+                  {c.ok ? <CheckCircle2 className="mt-0.5 w-4 h-4 shrink-0 text-green-600" /> : <XCircle className="mt-0.5 w-4 h-4 shrink-0 text-red-600" />}
                   <span className={c.ok ? "text-slate-700" : "text-red-600"}>{c.label}</span>
                 </span>
-                <span className="text-slate-500">{c.actual}{!c.ok && <span className="text-slate-400"> (need {c.expected})</span>}</span>
+                <span className="shrink-0 text-right text-slate-500">{c.actual}{!c.ok && <span className="block text-xs text-slate-400">need {c.expected}</span>}</span>
               </li>
             ))}
             {report.soft.map((w, i) => (

@@ -57,17 +57,29 @@ export default function OutcomePrompt() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 p-3 sm:p-4">
+    <div className="fixed inset-x-0 bottom-0 z-40 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
         <p className="text-sm font-semibold text-slate-800">{t("outcome.title", { exam: examName })}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" onClick={onYes} className="rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white">
+          <button
+            type="button"
+            onClick={onYes}
+            className="min-w-[7rem] flex-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white sm:flex-none"
+          >
             {t("outcome.yes")}
           </button>
-          <button type="button" onClick={() => setShowReject(true)} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white">
+          <button
+            type="button"
+            onClick={() => setShowReject(true)}
+            className="min-w-[7rem] flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white sm:flex-none"
+          >
             {t("outcome.no")}
           </button>
-          <button type="button" onClick={onLater} className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600">
+          <button
+            type="button"
+            onClick={onLater}
+            className="grow rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600"
+          >
             {t("outcome.later")}
           </button>
         </div>

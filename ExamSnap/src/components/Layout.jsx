@@ -36,7 +36,9 @@ export default function Layout() {
 
   return (
     <div className="flex flex-col min-h-[100dvh]">
-      <header className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-slate-200">
+      {/* Safe-area padding keeps the shell clear of the notch/home bar in standalone PWA mode
+          (index.html opts into viewport-fit=cover). */}
+      <header className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-slate-200 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {!isHome && (
@@ -44,7 +46,7 @@ export default function Layout() {
                 type="button"
                 onClick={goBack}
                 aria-label={t("nav.back")}
-                className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
               >
                 <ArrowLeft className="w-4 h-4" aria-hidden />
                 <span className="hidden sm:inline">{t("nav.back")}</span>
@@ -52,7 +54,8 @@ export default function Layout() {
             )}
             <Link to="/" className="flex items-baseline gap-1.5 min-w-0">
               <span className="text-lg font-bold text-blue-600">{t("brand")}</span>
-              <span className="text-xs text-slate-400 truncate">{t("brandBy")}</span>
+              {/* The tagline is decoration — the first thing to drop when a phone is narrow. */}
+              <span className="hidden text-xs text-slate-400 truncate xs:inline">{t("brandBy")}</span>
             </Link>
           </div>
           <LangToggle />
@@ -63,7 +66,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
+      <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5" aria-hidden />

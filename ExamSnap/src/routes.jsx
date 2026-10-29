@@ -9,6 +9,7 @@ import CustomPage from "./pages/CustomPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 import ModerationPage from "./pages/ModerationPage.jsx";
+import SpecAdminPage from "./pages/SpecAdminPage.jsx";
 
 // Root wraps everything in the i18n provider (above Layout, since the header uses it).
 function Root() {
@@ -42,6 +43,7 @@ export const routes = [
           { path: "privacy", element: <PrivacyPage />, entry: "src/pages/PrivacyPage.jsx" },
           { path: "analytics", element: <AnalyticsPage />, entry: "src/pages/AnalyticsPage.jsx" },
           { path: "moderation", element: <ModerationPage />, entry: "src/pages/ModerationPage.jsx" },
+          { path: "admin/specs", element: <SpecAdminPage />, entry: "src/pages/SpecAdminPage.jsx" },
           {
             path: "check/:slug",
             element: <CheckerPage />,

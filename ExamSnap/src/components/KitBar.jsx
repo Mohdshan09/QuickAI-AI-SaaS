@@ -33,12 +33,12 @@ export default function KitBar({ exam, kit }) {
       </p>
       <ul className="mt-2 space-y-1 text-sm">
         {kit.map((item) => (
-          <li key={item.docType} className="flex items-center justify-between">
-            <span className="text-slate-600">{item.filename}</span>
+          <li key={item.docType} className="flex items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-slate-600">{item.filename}</span>
             <button
               type="button"
               onClick={() => downloadBlob(item.blob, item.filename)}
-              className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+              className="inline-flex shrink-0 items-center gap-1 text-blue-600 hover:underline"
             >
               <Download className="w-3.5 h-3.5" aria-hidden />
               {t("result.download")}

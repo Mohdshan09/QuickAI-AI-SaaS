@@ -43,10 +43,12 @@ export default function RejectionForm({ exam = null, specHash = null, onClose })
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+      {/* Scrolls inside the viewport so the submit button stays reachable once the phone
+          keyboard is open, and clears the home bar on notched devices. */}
+      <div className="max-h-[calc(100dvh_-_2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl bg-white p-5 shadow-xl mb-[env(safe-area-inset-bottom)]">
         <div className="flex items-start justify-between">
           <h2 className="text-lg font-bold text-slate-900">{t("reject.title")}</h2>
-          <button type="button" onClick={onClose} aria-label={t("reject.cancel")} className="text-slate-400 hover:text-slate-600">
+          <button type="button" onClick={onClose} aria-label={t("reject.cancel")} className="-mr-1 -mt-1 rounded-lg p-1 text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" aria-hidden />
           </button>
         </div>

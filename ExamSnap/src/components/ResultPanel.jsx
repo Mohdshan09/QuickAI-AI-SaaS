@@ -26,8 +26,10 @@ export default function ResultPanel({ result, previewUrl, originalUrl, allowOver
             <img
               src={showBefore && originalUrl ? originalUrl : previewUrl}
               alt={showBefore ? "Original" : "Processed output preview"}
-              style={{ width: zoom === 200 ? "200%" : "100%", maxWidth: "none" }}
-              className="block"
+              // 100%: fit the whole photo inside the 16rem box. 200%: let it overflow so the
+              // scroll container can be panned around fine detail.
+              style={zoom === 200 ? { width: "200%", maxWidth: "none" } : { maxHeight: "16rem", maxWidth: "100%" }}
+              className="mx-auto block h-auto w-auto"
             />
           </div>
         )}
@@ -60,18 +62,18 @@ export default function ResultPanel({ result, previewUrl, originalUrl, allowOver
       <h3 className="text-sm font-semibold text-slate-700">{t("result.title")}</h3>
       <ul className="mt-2 space-y-1">
         {validation.checks.map((c) => (
-          <li key={c.rule} className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-2">
+          <li key={c.rule} className="flex items-start justify-between gap-3 text-sm">
+            <span className="flex min-w-0 items-start gap-2">
               {c.ok ? (
-                <CheckCircle2 className="w-4 h-4 text-green-600" aria-hidden />
+                <CheckCircle2 className="mt-0.5 w-4 h-4 shrink-0 text-green-600" aria-hidden />
               ) : (
-                <XCircle className="w-4 h-4 text-red-600" aria-hidden />
+                <XCircle className="mt-0.5 w-4 h-4 shrink-0 text-red-600" aria-hidden />
               )}
               <span className={c.ok ? "text-slate-700" : "text-red-600"}>{c.label}</span>
             </span>
-            <span className="text-slate-500">
+            <span className="shrink-0 text-right text-slate-500">
               {c.actual}
-              {!c.ok && <span className="text-slate-400"> (need {c.expected})</span>}
+              {!c.ok && <span className="block text-xs text-slate-400">need {c.expected}</span>}
             </span>
           </li>
         ))}
@@ -113,18 +115,18 @@ export default function ResultPanel({ result, previewUrl, originalUrl, allowOver
         <button
           type="button"
           onClick={onRedo}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700"
+          className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3 py-3 font-medium text-slate-700 sm:px-4"
         >
-          <RotateCcw className="w-4 h-4" aria-hidden />
+          <RotateCcw className="w-4 h-4 shrink-0" aria-hidden />
           {t("result.redo")}
         </button>
         <button
           type="button"
           disabled={!validation.pass && !allowOverride}
           onClick={handleDownload}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-medium text-white disabled:opacity-50"
+          className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-3 py-3 font-medium text-white disabled:opacity-50 sm:px-4"
         >
-          <Download className="w-4 h-4" aria-hidden />
+          <Download className="w-4 h-4 shrink-0" aria-hidden />
           {t("result.download")}
         </button>
       </div>

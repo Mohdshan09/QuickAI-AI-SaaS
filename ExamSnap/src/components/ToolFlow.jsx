@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Info, ListChecks, Loader2, PartyPopper, Sparkles } from "lucide-react";
 import Uploader from "./Uploader.jsx";
@@ -48,6 +48,16 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
   const [lastCrop, setLastCrop] = useState(null);
   const [kit, setKit] = useState([]);
   const [checklistAcknowledged, setChecklistAcknowledged] = useState(false);
+  const flowRef = useRef(null);
+
+  // On phones the page hero + checklist sit above the crop/result views, so bring the flow to
+  // the top of the viewport when a new step appears — otherwise the user's tap seems to do
+  // nothing. Desktop shows the tool beside the specs and needs no scroll.
+  useEffect(() => {
+    if (step !== "crop" && step !== "result" && step !== "done") return;
+    if (typeof window === "undefined" || window.innerWidth >= 1024) return;
+    flowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [step]);
 
   const doc = docs[docIndex];
   const isInk = INK_TYPES.has(doc.type);
@@ -189,7 +199,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
   };
 
   return (
-    <div className="mt-5">
+    <div ref={flowRef} className="mt-5 scroll-mt-20">
       {liveDocs.length > 0 && <LiveDocsNote docs={liveDocs} />}
 
       {/* Document progress — each chip is clickable so you can switch documents freely. */}

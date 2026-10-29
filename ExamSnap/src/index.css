@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Extra breakpoint for very narrow phones (iPhone SE class, 320–383px). */
+@theme {
+  --breakpoint-xs: 24rem;
+}
+
 /* Mobile-first defaults: comfortable tap targets, no horizontal scroll at 360px. */
 :root {
   color-scheme: light;
@@ -12,16 +17,30 @@ body {
   color: #0f172a;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
+  /* Guard rail: a single wide child must never make the whole page pan sideways. */
+  overflow-x: clip;
 }
 
 #root {
   min-height: 100dvh;
 }
 
-/* Keep interactive controls at least 44px tall for one-handed use. */
+/* Keep interactive controls at least 44px tall for one-handed use. Checkboxes, radios and
+   hidden file inputs are excluded — stretching them distorts their glyph and layout. */
 button,
 [role="button"],
-input,
-select {
+select,
+textarea,
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]) {
   min-height: 44px;
+}
+
+/* iOS zooms the whole page when a focused control is under 16px; keep text-entry fields at
+  16px on phones regardless of the utility classes on them. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

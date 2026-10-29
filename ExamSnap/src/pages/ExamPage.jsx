@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Head } from "vite-react-ssg";
 import { getExamBySlug, getListedExams } from "../specs/loadSpecs.js";
-import SpecTable from "../components/SpecTable.jsx";
+import SpecTable, { SpecWarning } from "../components/SpecTable.jsx";
 import OfficialSourceBadge from "../components/OfficialSourceBadge.jsx";
 import ClientToolFlow from "../components/ClientToolFlow.jsx";
 import ExamDiscussion from "../components/ExamDiscussion.jsx";
@@ -66,16 +66,21 @@ export default function ExamPage() {
         {t("checker.haveFile")}
       </Link>
 
-      {/* Two columns on desktop: specs on the left, the tool on the right — so the page
-          reads across rather than as one long scroll. Stacks on mobile. */}
+      {/* Phones put the tool first, so repeat the trust warning above it. */}
+      {!exam.verified && (
+        <SpecWarning className="mt-4 rounded-xl border border-amber-200 sm:hidden" />
+      )}
+
+      {/* Two columns on desktop: specs on the left, the tool on the right. On a phone the tool
+          comes first so the upload is never buried under four spec cards. */}
       <div className="mt-5 grid gap-6 lg:grid-cols-5 items-start">
-        <div className="lg:col-span-2 lg:sticky lg:top-20">
+        <div className="order-2 min-w-0 lg:order-1 lg:col-span-2 lg:sticky lg:top-20">
           <SpecTable exam={exam} />
           <div className="mt-4">
             <OfficialSourceBadge exam={exam} />
           </div>
         </div>
-        <div className="lg:col-span-3">
+        <div className="order-1 min-w-0 lg:order-2 lg:col-span-3">
           <ClientToolFlow exam={exam} allowOverride={false} />
         </div>
       </div>

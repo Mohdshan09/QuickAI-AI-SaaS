@@ -2,8 +2,21 @@ import { AlertTriangle, ExternalLink, CalendarCheck } from "lucide-react";
 import { useT } from "../i18n/index.jsx";
 
 // Plain-language spec table for an exam (spec §FR-2/3): per-document dimensions, size range
-// and background, plus the official source link + last-verified date. Shows a prominent
-// warning when an exam's values are not yet verified against the official notification.
+// and background, plus the official source link + last-verified date. The table collapses to
+// labelled cards on phones.
+//
+// SpecWarning is exported so exam pages can repeat the unverified-spec warning above the tool
+// on phones, where the spec table sits below the upload flow.
+export function SpecWarning({ className = "" }) {
+  const t = useT();
+  return (
+    <p className={`flex items-start gap-2 bg-amber-50 text-amber-800 text-sm px-4 py-2 ${className}`}>
+      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
+      {t("exam.unverifiedWarning")}
+    </p>
+  );
+}
+
 export default function SpecTable({ exam }) {
   const t = useT();
 
@@ -50,56 +63,76 @@ export default function SpecTable({ exam }) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      {!exam.verified && (
-        <p className="flex items-start gap-2 bg-amber-50 text-amber-800 text-sm px-4 py-2 border-b border-amber-200">
-          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
-          {t("exam.unverifiedWarning")}
-        </p>
-      )}
+      {!exam.verified && <SpecWarning className="border-b border-amber-200" />}
 
       <div className="px-4 pt-4">
         <h2 className="text-sm font-semibold text-slate-700">{t("exam.requiredDocs")}</h2>
       </div>
 
-      <table className="w-full text-sm mt-2">
-        <thead>
-          <tr className="text-left text-slate-400">
-            <th className="px-4 py-2 font-medium">Document</th>
-            <th className="px-4 py-2 font-medium">Dimensions</th>
-            <th className="px-4 py-2 font-medium">Size</th>
-            <th className="px-4 py-2 font-medium">Background</th>
-          </tr>
-        </thead>
-        <tbody>
-          {exam.documents.map((d, i) => (
-            <tr key={i} className="border-t border-slate-100 align-top">
-              <td className="px-4 py-2 font-medium text-slate-800">
-                {d.label}
-                <span className="block text-xs font-normal text-slate-400">{submissionText(d)}</span>
-              </td>
-              <td className="px-4 py-2 text-slate-600">
+      {/* Phones: four table columns squeeze "Not specified"/"20–50 KB" onto three lines and
+          push the table past the viewport, so each document becomes a labelled card. */}
+      <ul className="mt-2 divide-y divide-slate-100 sm:hidden">
+        {exam.documents.map((d, i) => (
+          <li key={i} className="px-4 py-3">
+            <p className="font-medium text-slate-800">{d.label}</p>
+            <p className="text-xs text-slate-400">{submissionText(d)}</p>
+            <dl className="mt-2 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
+              <dt className="text-slate-400">Dimensions</dt>
+              <dd className="text-slate-700">
                 {dimsText(d)}
-                {dimsHint(d) && <span className="block text-xs text-slate-400">{dimsHint(d)}</span>}
-              </td>
-              <td className="px-4 py-2 text-slate-600">{sizeText(d)}</td>
-              <td className="px-4 py-2 text-slate-600 capitalize">{bgText(d)}</td>
+                {dimsHint(d) && <span className="mt-0.5 block text-slate-400">{dimsHint(d)}</span>}
+              </dd>
+              <dt className="text-slate-400">Size</dt>
+              <dd className="text-slate-700">{sizeText(d)}</dd>
+              <dt className="text-slate-400">Background</dt>
+              <dd className="capitalize text-slate-700">{bgText(d)}</dd>
+            </dl>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden sm:block">
+        <table className="w-full text-sm mt-2">
+          <thead>
+            <tr className="text-left text-slate-400">
+              <th className="px-4 py-2 font-medium">Document</th>
+              <th className="px-4 py-2 font-medium">Dimensions</th>
+              <th className="px-4 py-2 font-medium">Size</th>
+              <th className="px-4 py-2 font-medium">Background</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {exam.documents.map((d, i) => (
+              <tr key={i} className="border-t border-slate-100 align-top">
+                <td className="px-4 py-2 font-medium text-slate-800">
+                  {d.label}
+                  <span className="block text-xs font-normal text-slate-400">{submissionText(d)}</span>
+                </td>
+                <td className="px-4 py-2 text-slate-600">
+                  {dimsText(d)}
+                  {dimsHint(d) && <span className="block text-xs text-slate-400">{dimsHint(d)}</span>}
+                </td>
+                <td className="px-4 py-2 text-slate-600">{sizeText(d)}</td>
+                <td className="px-4 py-2 text-slate-600 capitalize">{bgText(d)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="px-4 py-3 border-t border-slate-100 text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-        <span className="inline-flex items-center gap-1">
+        <span className="inline-flex min-w-0 items-start gap-1">
           {t("exam.officialSource")}:{" "}
           {exam.sourceUrl ? (
             <a
               href={exam.sourceUrl}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="inline-flex items-center gap-1 text-blue-600 hover:underline break-all"
+              className="inline-flex min-w-0 items-start gap-1 text-blue-600 hover:underline"
             >
-              {exam.sourceUrl}
-              <ExternalLink className="w-3 h-3 shrink-0" aria-hidden />
+              {/* Full URL, clamped to two lines so a long notification path can't dominate the card. */}
+              <span className="line-clamp-2 break-all">{exam.sourceUrl}</span>
+              <ExternalLink className="mt-0.5 w-3 h-3 shrink-0" aria-hidden />
             </a>
           ) : (
             "—"

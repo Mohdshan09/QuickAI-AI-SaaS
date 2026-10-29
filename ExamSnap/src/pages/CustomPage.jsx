@@ -235,7 +235,7 @@ export default function CustomPage() {
         </form>
       ) : (
         <div className="mt-5 grid gap-6 lg:grid-cols-5 items-start">
-          <div className="lg:col-span-2 lg:sticky lg:top-20">
+          <div className="order-2 min-w-0 lg:order-1 lg:col-span-2 lg:sticky lg:top-20">
             <SpecTable exam={exam} />
             <button
               type="button"
@@ -245,7 +245,7 @@ export default function CustomPage() {
               ← Change specs
             </button>
           </div>
-          <div className="lg:col-span-3">
+          <div className="order-1 min-w-0 lg:order-2 lg:col-span-3">
             <ClientToolFlow exam={exam} allowOverride submitUnlisted={submitUnlisted} />
           </div>
         </div>

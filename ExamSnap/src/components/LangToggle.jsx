@@ -5,7 +5,7 @@ import { useLocale } from "../i18n/index.jsx";
 export default function LangToggle() {
   const { lang, setLang, t } = useLocale();
   return (
-    <div className="inline-flex rounded-lg border border-slate-200 bg-white text-sm overflow-hidden">
+    <div className="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white text-sm overflow-hidden">
       {["en", "hi"].map((code) => (
         <button
           key={code}

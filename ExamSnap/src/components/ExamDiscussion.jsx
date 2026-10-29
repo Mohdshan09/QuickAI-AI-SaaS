@@ -154,7 +154,7 @@ function Comment({ comment, replies, onReply, onReport }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4">
       <p className="font-medium text-slate-800">{comment.alias}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{comment.body}</p>
+      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-700">{comment.body}</p>
       <div className="mt-2 flex gap-3">
         <button type="button" onClick={() => onReply(comment)} className="text-sm text-blue-600 hover:underline">Reply</button>
         <button type="button" onClick={() => onReport(comment)} className="text-sm text-slate-500 hover:text-red-700 hover:underline">Report comment</button>

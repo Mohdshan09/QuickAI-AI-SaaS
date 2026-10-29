@@ -18,7 +18,7 @@ export default function Uploader({ onFile, docLabel }) {
   };
 
   return (
-    <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white px-6 py-8 text-center">
+    <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 py-6 text-center sm:px-6 sm:py-8">
       <p className="font-medium text-slate-800">
         {docLabel ? `${t("upload.cta")} — ${docLabel}` : t("upload.cta")}
       </p>

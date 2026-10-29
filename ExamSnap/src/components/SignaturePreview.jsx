@@ -25,7 +25,7 @@ export default function SignaturePreview({ cleanup, originalUrl, processedUrl, f
         <img
           src={showBefore ? originalUrl : processedUrl}
           alt={showBefore ? t("sig.before") : t("sig.after")}
-          className="max-h-40 rounded border border-slate-200 bg-slate-50 object-contain"
+          className="max-h-40 max-w-full rounded border border-slate-200 bg-slate-50 object-contain"
         />
       </div>
 

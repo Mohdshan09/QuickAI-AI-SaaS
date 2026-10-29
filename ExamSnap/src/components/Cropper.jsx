@@ -25,7 +25,8 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
 
   return (
     <div>
-      <div className="relative w-full h-[55vh] min-h-[320px] bg-slate-900 rounded-xl overflow-hidden">
+      {/* dvh tracks the shrinking viewport when phones show/hide their browser chrome. */}
+      <div className="relative w-full h-[50dvh] min-h-[280px] sm:h-[55vh] sm:min-h-[320px] bg-slate-900 rounded-xl overflow-hidden">
         {url && (
           <EasyCrop
             image={url}
@@ -56,7 +57,7 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
           type="button"
           onClick={() => rotate(-90)}
           aria-label={t("crop.rotateLeft")}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
         >
           <RotateCcw className="w-4 h-4" aria-hidden />
           <span className="hidden sm:inline">{t("crop.rotateLeft")}</span>
@@ -65,7 +66,7 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
           type="button"
           onClick={() => rotate(90)}
           aria-label={t("crop.rotateRight")}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
         >
           <RotateCw className="w-4 h-4" aria-hidden />
           <span className="hidden sm:inline">{t("crop.rotateRight")}</span>
@@ -76,7 +77,7 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
           max={45}
           value={rotation > 180 ? rotation - 360 : rotation}
           onChange={(e) => setRotation(Number(e.target.value))}
-          className="flex-1"
+          className="min-w-0 flex-1"
           aria-label="Fine rotation"
         />
       </div>
@@ -85,7 +86,7 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700"
+          className="flex-1 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3 py-3 font-medium text-slate-700 sm:px-4"
         >
           {t("result.redo")}
         </button>
@@ -93,9 +94,9 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
           type="button"
           disabled={!areaPixels}
           onClick={() => onConfirm({ cropPixels: areaPixels, rotationDeg: rotation })}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-medium text-white disabled:opacity-50"
+          className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-3 py-3 font-medium text-white disabled:opacity-50 sm:px-4"
         >
-          <CropIcon className="w-4 h-4" aria-hidden />
+          <CropIcon className="w-4 h-4 shrink-0" aria-hidden />
           {t("crop.apply")}
         </button>
       </div>
