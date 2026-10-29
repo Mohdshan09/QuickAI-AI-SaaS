@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Search, Settings2 } from "lucide-react";
-import { useT } from "../i18n/index.jsx";
+import { useT, useLocalePath } from "../i18n/index.jsx";
 
 // Searchable exam list, popular exams first (spec §FR-1). Pure presentation over the
 // resolved exam list passed in; selecting an exam navigates to its SEO page.
 export default function ExamPicker({ exams }) {
   const t = useT();
+  const lp = useLocalePath();
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
@@ -45,12 +46,12 @@ export default function ExamPicker({ exams }) {
       )}
 
       {popular.length > 0 && (
-        <Section title={t("home.popular")} exams={popular} />
+        <Section title={t("home.popular")} exams={popular} lp={lp} />
       )}
-      {rest.length > 0 && <Section title={t("home.all")} exams={rest} />}
+      {rest.length > 0 && <Section title={t("home.all")} exams={rest} lp={lp} />}
 
       <Link
-        to="/custom"
+        to={lp("/custom")}
         className="mt-5 flex items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 p-4 hover:border-blue-400"
       >
         <Settings2 className="w-5 h-5 text-slate-500 shrink-0" aria-hidden />
@@ -63,7 +64,7 @@ export default function ExamPicker({ exams }) {
   );
 }
 
-function Section({ title, exams }) {
+function Section({ title, exams, lp }) {
   return (
     <section className="mt-5">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
@@ -71,7 +72,7 @@ function Section({ title, exams }) {
         {exams.map((e) => (
           <li key={e.id}>
             <Link
-              to={`/${e.slug}`}
+              to={lp(`/${e.slug}`)}
               className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 hover:border-blue-400"
             >
               <span>

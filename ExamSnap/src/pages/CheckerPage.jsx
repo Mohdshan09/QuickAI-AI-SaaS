@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Head, ClientOnly } from "vite-react-ssg";
+import { ClientOnly } from "vite-react-ssg";
 import { CheckCircle2, XCircle, AlertTriangle, Wrench } from "lucide-react";
 import { getExamBySlug, getListedExams } from "../specs/loadSpecs.js";
 import SpecTable, { SpecWarning } from "../components/SpecTable.jsx";
 import Uploader from "../components/Uploader.jsx";
 import ClientToolFlow from "../components/ClientToolFlow.jsx";
+import Seo from "../components/Seo.jsx";
+import { siteUrl } from "../lib/site.js";
 import { track, EVENTS } from "../lib/analytics.js";
-import { useT } from "../i18n/index.jsx";
+import { useLocalePath, useT } from "../i18n/index.jsx";
 
 // Checker mode (spec §4.1): upload an existing file and see pass/fail/warn against the exam
 // spec, then "Fix it" into the normal pipeline. Prerendered per exam (P2-FR-9).
 export default function CheckerPage() {
   const t = useT();
+  const lp = useLocalePath();
   const { slug } = useParams();
   const exam = getExamBySlug(slug);
 
@@ -20,29 +23,41 @@ export default function CheckerPage() {
     return (
       <div className="text-center py-16">
         <p className="text-slate-600">{t("home.noResults")}</p>
-        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">
+        <Link to={lp("/")} className="mt-4 inline-block text-blue-600 hover:underline">
           ← {t("brand")}
         </Link>
       </div>
     );
   }
 
-  const title = `Check your ${exam.name} photo & signature — ExamSnap`;
+  const title = t("seo.check.title", { name: exam.name });
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "ExamSnap", item: siteUrl(lp("/")) },
+      { "@type": "ListItem", position: 2, name: exam.name, item: siteUrl(lp(`/${exam.slug}`)) },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: t("checker.tab"),
+        item: siteUrl(lp(`/check/${exam.slug}`)),
+      },
+    ],
+  };
 
   return (
     <div>
-      <Head>
-        <title>{title}</title>
-        <meta
-          name="description"
-          content={`Upload your ${exam.name} photo or signature and instantly see whether it meets the required format, size and dimensions — free and private.`}
-        />
-        <link rel="canonical" href={`https://quickai.com/examsnap/check/${exam.slug}`} />
-      </Head>
+      <Seo
+        path={`/check/${exam.slug}`}
+        title={title}
+        description={t("seo.check.desc", { name: exam.name })}
+        jsonLd={breadcrumb}
+      />
 
       <nav className="text-sm text-slate-400 mb-3">
-        <Link to="/" className="hover:underline">{t("brand")}</Link> /{" "}
-        <Link to={`/${exam.slug}`} className="hover:underline">{exam.name}</Link> / {t("checker.tab")}
+        <Link to={lp("/")} className="hover:underline">{t("brand")}</Link> /{" "}
+        <Link to={lp(`/${exam.slug}`)} className="hover:underline">{exam.name}</Link> / {t("checker.tab")}
       </nav>
       <h1 className="text-2xl font-bold text-slate-900">{t("checker.title", { exam: exam.name })}</h1>
 
@@ -106,7 +121,7 @@ function Checker({ exam }) {
     <div>
       {docs.length > 1 && (
         <fieldset className="mb-4">
-          <legend className="mb-2 text-sm font-medium text-slate-700">Which rejected file do you want to check?</legend>
+          <legend className="mb-2 text-sm font-medium text-slate-700">{t("checker.chooseDoc")}</legend>
           <div className="flex flex-wrap gap-2">
             {docs.map((item, index) => (
               <button
@@ -137,7 +152,7 @@ function Checker({ exam }) {
                   {c.ok ? <CheckCircle2 className="mt-0.5 w-4 h-4 shrink-0 text-green-600" /> : <XCircle className="mt-0.5 w-4 h-4 shrink-0 text-red-600" />}
                   <span className={c.ok ? "text-slate-700" : "text-red-600"}>{c.label}</span>
                 </span>
-                <span className="shrink-0 text-right text-slate-500">{c.actual}{!c.ok && <span className="block text-xs text-slate-400">need {c.expected}</span>}</span>
+                <span className="shrink-0 text-right text-slate-500">{c.actual}{!c.ok && <span className="block text-xs text-slate-400">{t("checker.need", { expected: c.expected })}</span>}</span>
               </li>
             ))}
             {report.soft.map((w, i) => (
@@ -158,7 +173,7 @@ function Checker({ exam }) {
               className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 font-medium text-white"
             >
               <Wrench className="w-4 h-4" aria-hidden />
-              Fix this {doc.label.toLowerCase()}
+              {t("checker.fixThis", { doc: doc.label.toLowerCase() })}
             </button>
           )}
         </div>
@@ -167,7 +182,7 @@ function Checker({ exam }) {
   );
 }
 
-// Prerender a checker page per exam (parallel to the exam pages).
-export function getStaticPaths() {
-  return getListedExams().map((e) => `/check/${e.slug}`);
+// Prerender a checker page per exam (parallel to the exam pages). `prefix` is "" or "/hi".
+export function getStaticPaths(prefix = "") {
+  return getListedExams().map((e) => `${prefix}/check/${e.slug}`);
 }

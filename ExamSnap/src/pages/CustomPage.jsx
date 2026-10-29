@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Head } from "vite-react-ssg";
 import { buildCustomExam } from "../specs/loadSpecs.js";
 import ClientToolFlow from "../components/ClientToolFlow.jsx";
 import SpecTable from "../components/SpecTable.jsx";
-import { useT } from "../i18n/index.jsx";
+import Seo from "../components/Seo.jsx";
+import { siteUrl } from "../lib/site.js";
+import { useLocalePath, useT } from "../i18n/index.jsx";
 import { getJson } from "../lib/apiClient.js";
 import { getAnonId } from "../lib/anonId.js";
 import { sendOrQueue } from "../lib/submissionQueue.js";
@@ -16,6 +17,7 @@ import { saveRecentExam } from "../lib/recentExams.js";
 // overridden with a warning (§FR-18).
 export default function CustomPage() {
   const t = useT();
+  const lp = useLocalePath();
   const location = useLocation();
   const restoredPreset = location.state?.preset || null;
   const [form, setForm] = useState(restoredPreset || {
@@ -107,16 +109,22 @@ export default function CustomPage() {
 
   return (
     <div>
-      <Head>
-        <title>Custom photo & signature size — ExamSnap by Quick AI</title>
-        <meta
-          name="description"
-          content="Just enter your exam's KB size and we'll resize and compress your photo or signature to fit — free, on your device. Pixel size optional."
-        />
-      </Head>
+      <Seo
+        path="/custom"
+        title={t("seo.custom.title")}
+        description={t("seo.custom.desc")}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "ExamSnap", item: siteUrl(lp("/")) },
+            { "@type": "ListItem", position: 2, name: t("home.custom"), item: siteUrl(lp("/custom")) },
+          ],
+        }}
+      />
 
       <nav className="text-sm text-slate-400 mb-3">
-        <Link to="/" className="hover:underline">
+        <Link to={lp("/")} className="hover:underline">
           {t("brand")}
         </Link>{" "}
         / {t("home.custom")}
@@ -133,7 +141,7 @@ export default function CustomPage() {
               value={form.name}
               onChange={set("name")}
               maxLength={120}
-              placeholder="e.g. State PSC Clerk"
+              placeholder={t("custom.namePlaceholder")}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500"
             />
             <span className="mt-1 block text-xs text-slate-400">{t("custom.examNameHint")}</span>
@@ -141,14 +149,14 @@ export default function CustomPage() {
 
           {form.name.trim().length >= 3 && (
             <div className="col-span-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
-              <p className="font-medium text-slate-800">Community-submitted sizes</p>
+              <p className="font-medium text-slate-800">{t("custom.communityTitle")}</p>
               <p className="mt-1 text-xs text-slate-600">
-                {loadingPresets ? "Checking saved sizes…" : "Check these against the official notification before using them."}
+                {loadingPresets ? t("custom.communityChecking") : t("custom.communityHint")}
               </p>
               {!loadingPresets && presets.map((preset, index) => {
                 const doc = preset.documents?.find((item) => item.type === form.type) || preset.documents?.[0];
                 if (!doc) return null;
-                const dimensions = doc.width && doc.height ? `${doc.width} × ${doc.height}px` : "Pixels not specified";
+                const dimensions = doc.width && doc.height ? `${doc.width} × ${doc.height}px` : t("custom.pixelsNotSpecified");
                 return (
                   <button
                     key={`${index}-${doc.type}-${doc.maxKb}`}
@@ -156,16 +164,21 @@ export default function CustomPage() {
                     onClick={() => usePreset(preset)}
                     className="mt-2 block w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-left hover:border-blue-500"
                   >
-                    Use {doc.type} — {dimensions}, {doc.minKb || 0}–{doc.maxKb || "?"} KB
-                    {preset.uses > 1 ? ` · used by ${preset.uses} students` : ""}
+                    {t("custom.usePreset", {
+                      type: t(doc.type === "signature" ? "custom.typeSignature" : "custom.typePhoto"),
+                      dims: dimensions,
+                      min: doc.minKb || 0,
+                      max: doc.maxKb || "?",
+                    })}
+                    {preset.uses > 1 ? ` · ${t("custom.usedBy", { n: preset.uses })}` : ""}
                   </button>
                 );
               })}
               {!loadingPresets && presets.some((preset) => preset.sourceUrl) && (
-                <p className="mt-2 text-xs text-slate-600">Every shared preset includes a contributor-provided official notification link. Confirm it before using a size.</p>
+                <p className="mt-2 text-xs text-slate-600">{t("custom.sharedHint")}</p>
               )}
               {!loadingPresets && presets.length === 0 && (
-                <p className="mt-2 text-xs text-slate-500">No saved sizes for this exam yet. Yours will help the next student.</p>
+                <p className="mt-2 text-xs text-slate-500">{t("custom.noPresets")}</p>
               )}
             </div>
           )}
@@ -222,7 +235,7 @@ export default function CustomPage() {
               placeholder="https://…"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500"
             />
-            <span className="mt-1 block text-xs text-slate-400">{form.name.trim() ? "Required to share a community preset. Use the official notification link." : t("custom.notifHint")}</span>
+            <span className="mt-1 block text-xs text-slate-400">{form.name.trim() ? t("custom.notifRequired") : t("custom.notifHint")}</span>
           </label>
 
           <button
@@ -242,7 +255,7 @@ export default function CustomPage() {
               onClick={() => setExam(null)}
               className="mt-4 text-sm text-slate-500 hover:underline"
             >
-              ← Change specs
+              {t("custom.changeSpecs")}
             </button>
           </div>
           <div className="order-1 min-w-0 lg:order-2 lg:col-span-3">

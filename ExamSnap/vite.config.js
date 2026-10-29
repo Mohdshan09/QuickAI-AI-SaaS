@@ -2,12 +2,14 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { SITE_URL, BASE } from "./scripts/site.mjs";
 
-// ExamSnap is served on the same domain as Quick AI under /examsnap/ (subfolder, via
-// host rewrites). `base` makes every asset + route resolve under that path. The app has
-// no backend and no auth — it is a purely client-side image tool.
+// `base` comes from SITE_URL (scripts/site.mjs): "/" when the app is its own domain, or a
+// subfolder path like "/examsnap/" when it is mounted under another site. The same origin is
+// injected as __SITE_URL__ for canonicals, Open Graph tags and JSON-LD (src/lib/site.js).
 export default defineConfig({
-  base: "/examsnap/",
+  base: BASE,
+  define: { __SITE_URL__: JSON.stringify(SITE_URL) },
   plugins: [
     react(),
     tailwindcss(),
@@ -26,8 +28,8 @@ export default defineConfig({
         theme_color: "#2563eb",
         background_color: "#ffffff",
         display: "standalone",
-        scope: "/examsnap/",
-        start_url: "/examsnap/",
+        scope: BASE,
+        start_url: BASE,
         // SVG icon avoids shipping binary placeholders; for best install UX on Android,
         // generate 192/512 PNGs (e.g. `@vite-pwa/assets-generator`) and add them here.
         icons: [

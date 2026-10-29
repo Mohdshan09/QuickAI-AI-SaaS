@@ -11,53 +11,64 @@ import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 import ModerationPage from "./pages/ModerationPage.jsx";
 import SpecAdminPage from "./pages/SpecAdminPage.jsx";
 
-// Root wraps everything in the i18n provider (above Layout, since the header uses it).
-function Root() {
+// Root for one language subtree. Language lives in the URL (/hi/…) so prerendered pages, their
+// canonical URLs and the hreflang pair always agree; the provider never reads storage.
+function LocaleRoot({ locale }) {
   return (
-    <LocaleProvider>
-      {/* Default head; each page overrides the title/description (unhead: last wins). */}
+    <LocaleProvider lang={locale}>
       <Head>
-        <title>ExamSnap by Quick AI — Exam photo & signature resizer</title>
-        <meta
-          name="description"
-          content="Pick your government exam, upload a photo, and download a photo or signature guaranteed to meet the exact size and format. Free, private, works on your phone."
-        />
+        {/* Helmet merges head tags across the tree; this sets <html lang> for every page. */}
+        <html lang={locale} />
+        {/* Fallback only — each page's <Seo> overrides title/description. */}
+        <title>ExamSnap by Quick AI</title>
+        <meta name="description" content="Exam-ready photo and signature in 30 seconds." />
       </Head>
       <Outlet />
     </LocaleProvider>
   );
 }
 
-// react-router route objects consumed by vite-react-ssg. The ':slug' route carries
-// getStaticPaths so every exam page prerenders to its own static HTML file.
+// Public pages, reused by both language subtrees. `prefix` is "" for English and "/hi" for
+// Hindi; the page components themselves read the locale from context.
+function publicPages(locale) {
+  const prefix = locale === "hi" ? "/hi" : "";
+  return [
+    { index: true, element: <Home />, entry: "src/pages/Home.jsx" },
+    { path: "custom", element: <CustomPage />, entry: "src/pages/CustomPage.jsx" },
+    { path: "privacy", element: <PrivacyPage />, entry: "src/pages/PrivacyPage.jsx" },
+    {
+      path: "check/:slug",
+      element: <CheckerPage />,
+      entry: "src/pages/CheckerPage.jsx",
+      getStaticPaths: () => checkerStaticPaths(prefix),
+    },
+    {
+      path: ":slug",
+      element: <ExamPage />,
+      entry: "src/pages/ExamPage.jsx",
+      getStaticPaths: () => examStaticPaths(prefix),
+    },
+  ];
+}
+
+// Operator tools stay English-only and are never linked from the public pages.
+const adminPages = [
+  { path: "analytics", element: <AnalyticsPage />, entry: "src/pages/AnalyticsPage.jsx" },
+  { path: "moderation", element: <ModerationPage />, entry: "src/pages/ModerationPage.jsx" },
+  { path: "admin/specs", element: <SpecAdminPage />, entry: "src/pages/SpecAdminPage.jsx" },
+];
+
+// react-router route objects consumed by vite-react-ssg. The ':slug' routes carry getStaticPaths
+// so every exam page prerenders to its own static HTML file in both languages.
 export const routes = [
   {
     path: "/",
-    element: <Root />,
-    children: [
-      {
-        element: <Layout />,
-        children: [
-          { index: true, element: <Home />, entry: "src/pages/Home.jsx" },
-          { path: "custom", element: <CustomPage />, entry: "src/pages/CustomPage.jsx" },
-          { path: "privacy", element: <PrivacyPage />, entry: "src/pages/PrivacyPage.jsx" },
-          { path: "analytics", element: <AnalyticsPage />, entry: "src/pages/AnalyticsPage.jsx" },
-          { path: "moderation", element: <ModerationPage />, entry: "src/pages/ModerationPage.jsx" },
-          { path: "admin/specs", element: <SpecAdminPage />, entry: "src/pages/SpecAdminPage.jsx" },
-          {
-            path: "check/:slug",
-            element: <CheckerPage />,
-            entry: "src/pages/CheckerPage.jsx",
-            getStaticPaths: checkerStaticPaths,
-          },
-          {
-            path: ":slug",
-            element: <ExamPage />,
-            entry: "src/pages/ExamPage.jsx",
-            getStaticPaths: examStaticPaths,
-          },
-        ],
-      },
-    ],
+    element: <LocaleRoot locale="en" />,
+    children: [{ element: <Layout />, children: [...publicPages("en"), ...adminPages] }],
+  },
+  {
+    path: "/hi",
+    element: <LocaleRoot locale="hi" />,
+    children: [{ element: <Layout />, children: publicPages("hi") }],
   },
 ];

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getJson, postJson } from "../lib/apiClient.js";
 import { getAnonId } from "../lib/anonId.js";
+import { useT } from "../i18n/index.jsx";
 
 const ALIAS_KEY = "examsnap:alias";
 const EMPTY_BODY = "";
@@ -17,6 +18,7 @@ function clearAlias() {
 
 /** Public, alias-only conversation scoped to the current exam. */
 export default function ExamDiscussion({ examRef, examName }) {
+  const t = useT();
   const [comments, setComments] = useState([]);
   // savedAlias: the alias persisted in localStorage ("" means not yet chosen)
   const [savedAlias, setSavedAlias] = useState(() => getSavedAlias());
@@ -32,10 +34,10 @@ export default function ExamDiscussion({ examRef, examName }) {
     setLoading(true);
     getJson(`comments?examRef=${encodeURIComponent(examRef)}`)
       .then((data) => !cancelled && setComments(Array.isArray(data.comments) ? data.comments : []))
-      .catch(() => !cancelled && setError("Could not load the discussion."))
+      .catch(() => !cancelled && setError(t("discuss.loadError")))
       .finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
-  }, [examRef]);
+  }, [examRef, t]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -53,7 +55,7 @@ export default function ExamDiscussion({ examRef, examName }) {
       setBody(EMPTY_BODY);
       setReplyTo(null);
     } catch {
-      setError("Your comment could not be posted. Do not include links, emails, or phone numbers.");
+      setError(t("discuss.postError"));
     } finally {
       setSending(false);
     }
@@ -66,12 +68,12 @@ export default function ExamDiscussion({ examRef, examName }) {
   };
 
   const report = async (comment) => {
-    const reason = window.prompt("Why are you reporting this? Enter: spam, harmful, misleading, or other.", "spam");
+    const reason = window.prompt(t("discuss.reportPrompt"), "spam");
     if (!reason) return;
     try {
       const data = await postJson("comments", { action: "report", commentId: comment.id, reason: reason.trim().toLowerCase(), anonId: getAnonId() });
-      setError(data.hidden ? "Thanks. This comment has been hidden for review." : "Thanks. Your report has been sent for review.");
-    } catch { setError("Could not send the report. Please choose spam, harmful, misleading, or other."); }
+      setError(data.hidden ? t("discuss.reportThanksHidden") : t("discuss.reportThanks"));
+    } catch { setError(t("discuss.reportError")); }
   };
 
   const roots = comments.filter((c) => c.parentId == null);
@@ -79,27 +81,27 @@ export default function ExamDiscussion({ examRef, examName }) {
 
   return (
     <section className="mt-10 border-t border-slate-200 pt-7" aria-labelledby="discussion-heading">
-      <h2 id="discussion-heading" className="text-xl font-bold text-slate-900">Discuss {examName}</h2>
-      <p className="mt-1 text-sm text-slate-600">Share application tips or ask a question using an alias. Keep personal contact details private.</p>
+      <h2 id="discussion-heading" className="text-xl font-bold text-slate-900">{t("discuss.title", { exam: examName })}</h2>
+      <p className="mt-1 text-sm text-slate-600">{t("discuss.lead")}</p>
 
       <form onSubmit={submit} className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
         {replyTo && (
           <p className="mb-3 text-sm text-slate-600">
-            Replying to {replyTo.alias}.{" "}
-            <button type="button" onClick={() => setReplyTo(null)} className="text-blue-600 hover:underline">Cancel</button>
+            {t("discuss.replyingTo", { alias: replyTo.alias })}{" "}
+            <button type="button" onClick={() => setReplyTo(null)} className="text-blue-600 hover:underline">{t("discuss.cancel")}</button>
           </p>
         )}
 
         {/* Alias row — shown only when no alias has been saved yet */}
         {savedAlias ? (
           <p className="mb-3 text-sm text-slate-600">
-            Posting as <span className="font-medium text-slate-800">{savedAlias}</span>
+            {t("discuss.postingAs", { alias: savedAlias })}
             {" · "}
-            <button type="button" onClick={handleChangeAlias} className="text-blue-600 hover:underline">change</button>
+            <button type="button" onClick={handleChangeAlias} className="text-blue-600 hover:underline">{t("discuss.change")}</button>
           </p>
         ) : (
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-700">Your alias</span>
+            <span className="mb-1 block text-slate-700">{t("discuss.alias")}</span>
             <input
               required
               maxLength="32"
@@ -112,34 +114,34 @@ export default function ExamDiscussion({ examRef, examName }) {
         )}
 
         <label className="mt-3 block text-sm">
-          <span className="mb-1 block text-slate-700">Comment</span>
+          <span className="mb-1 block text-slate-700">{t("discuss.comment")}</span>
           <textarea
             required
             maxLength="1000"
             rows="3"
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Ask about the application or share a helpful tip…"
+            placeholder={t("discuss.commentPlaceholder")}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
           />
         </label>
 
-        <p className="mt-2 text-xs text-slate-500">Links, email addresses, and phone numbers are not allowed.</p>
+        <p className="mt-2 text-xs text-slate-500">{t("discuss.noLinks")}</p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
         <button
           disabled={sending}
           className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          {sending ? "Posting…" : replyTo ? "Post reply" : "Post comment"}
+          {sending ? t("discuss.posting") : replyTo ? t("discuss.postReply") : t("discuss.postComment")}
         </button>
       </form>
 
       {loading
-        ? <p className="mt-5 text-sm text-slate-500">Loading discussion…</p>
+        ? <p className="mt-5 text-sm text-slate-500">{t("discuss.loading")}</p>
         : (
           <div className="mt-5 space-y-4">
-            {!roots.length && <p className="text-sm text-slate-500">No comments yet. Start the discussion.</p>}
+            {!roots.length && <p className="text-sm text-slate-500">{t("discuss.empty")}</p>}
             {roots.map((comment) => (
               <Comment key={comment.id} comment={comment} replies={replies(comment.id)} onReply={setReplyTo} onReport={report} />
             ))}
@@ -151,13 +153,14 @@ export default function ExamDiscussion({ examRef, examName }) {
 }
 
 function Comment({ comment, replies, onReply, onReport }) {
+  const t = useT();
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4">
       <p className="font-medium text-slate-800">{comment.alias}</p>
       <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-700">{comment.body}</p>
       <div className="mt-2 flex gap-3">
-        <button type="button" onClick={() => onReply(comment)} className="text-sm text-blue-600 hover:underline">Reply</button>
-        <button type="button" onClick={() => onReport(comment)} className="text-sm text-slate-500 hover:text-red-700 hover:underline">Report comment</button>
+        <button type="button" onClick={() => onReply(comment)} className="text-sm text-blue-600 hover:underline">{t("discuss.reply")}</button>
+        <button type="button" onClick={() => onReport(comment)} className="text-sm text-slate-500 hover:text-red-700 hover:underline">{t("discuss.report")}</button>
       </div>
       {replies.length > 0 && (
         <div className="mt-3 space-y-3 border-l-2 border-blue-100 pl-4">

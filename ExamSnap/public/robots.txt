@@ -1,4 +1,7 @@
 User-agent: *
-Allow: /examsnap/
+Allow: /
 
-Sitemap: https://quick-ai-frontend-zeta.vercel.app/examsnap/sitemap.xml
+# API endpoints are never indexable.
+Disallow: /examsnap/api/
+
+Sitemap: https://exam-snap-drab.vercel.app/examsnap/sitemap.xml

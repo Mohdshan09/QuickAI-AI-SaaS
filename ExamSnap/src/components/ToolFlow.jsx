@@ -13,7 +13,7 @@ import { runPipeline } from "../lib/processClient.js";
 import { downloadBlob, filenameFor } from "../lib/download.js";
 import { loadKit, saveKit, clearKit } from "../lib/kitStore.js";
 import { track, EVENTS } from "../lib/analytics.js";
-import { useT } from "../i18n/index.jsx";
+import { useT, useLocalePath } from "../i18n/index.jsx";
 import { normalizeExamName } from "../lib/normalize.js";
 import { specHash as computeSpecHash } from "../lib/specHash.js";
 import { recordDownload } from "../lib/outcomeStore.js";
@@ -32,6 +32,7 @@ const defaultOptions = () => ({
 // ZIP download, persisted to IndexedDB so a mid-kit return resumes.
 export default function ToolFlow({ exam, allowOverride = false, initialFile = null, submitUnlisted = null }) {
   const t = useT();
+  const lp = useLocalePath();
   const docs = exam.processableDocuments || exam.documents;
   const liveDocs = exam.liveDocuments || [];
   // An unlisted/custom exam the user named → we record demand + their entered spec on download.
@@ -318,7 +319,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
           </p>
           <QualityFeedback examRef={examRef} documentTypes={kit.map((k) => k.docType)} />
           <Link
-            to="/"
+            to={lp("/")}
             onClick={finishKit}
             className="mt-3 inline-block rounded-xl bg-blue-600 px-5 py-2.5 font-medium text-white"
           >
@@ -354,24 +355,27 @@ function LiveDocsNote({ docs }) {
 // A single, actionable checklist before an upload. It combines file constraints with the
 // official appearance rules so a student can catch common portal rejections before processing.
 function PreSubmitChecklist({ doc, checked, onChange }) {
+  const t = useT();
   const size = doc.sizeSpecified
-    ? `${doc.minKb > 0 ? `${doc.minKb}–` : "up to "}${Number.isFinite(doc.maxKb) ? `${doc.maxKb} KB` : "the stated limit"}`
-    : "No official KB limit is listed";
+    ? `${doc.minKb > 0 ? `${doc.minKb}–` : `${t("presubmit.upTo")} `}${Number.isFinite(doc.maxKb) ? `${doc.maxKb} KB` : t("presubmit.statedLimit")}`
+    : t("presubmit.noKbLimit");
   const dimensions = doc.dimensionSpecified
     ? `${doc.width} × ${doc.height}px`
-    : "No exact pixel size is listed";
+    : t("presubmit.noPixel");
   const basics = [
-    `Use a ${doc.format?.toUpperCase() || "JPEG"} / JPG image.`,
-    `${doc.label}: ${dimensions}.`,
-    `${doc.label}: ${size}.`,
+    t("presubmit.format", { format: doc.format?.toUpperCase() || "JPEG" }),
+    t("presubmit.dimension", { label: doc.label, dims: dimensions }),
+    t("presubmit.size", { label: doc.label, size }),
   ];
-  if (doc.background && doc.background !== "not-specified") basics.push(`Use a ${doc.background} background.`);
+  if (doc.background && doc.background !== "not-specified") {
+    basics.push(t("presubmit.background", { bg: doc.background }));
+  }
 
   return (
     <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
       <p className="flex items-center gap-2 text-sm font-semibold text-blue-950">
         <ListChecks className="w-4 h-4 shrink-0 text-blue-700" aria-hidden />
-        Before uploading your {doc.label.toLowerCase()}
+        {t("presubmit.heading", { doc: doc.label.toLowerCase() })}
       </p>
       <ul className="mt-2 space-y-1.5 text-sm text-blue-950">
         {[...basics, ...(doc.contentRules || [])].map((rule, index) => (
@@ -388,9 +392,9 @@ function PreSubmitChecklist({ doc, checked, onChange }) {
           onChange={(event) => onChange(event.target.checked)}
           className="h-5 w-5 shrink-0 cursor-pointer accent-blue-600"
         />
-        <span>I have checked these requirements and understand that the official notification is final.</span>
+        <span>{t("tool.ack")}</span>
       </label>
-      {!checked && <p className="mt-2 text-xs text-blue-800">Tick the box to continue to the upload.</p>}
+      {!checked && <p className="mt-2 text-xs text-blue-800">{t("tool.ackHint")}</p>}
     </div>
   );
 }

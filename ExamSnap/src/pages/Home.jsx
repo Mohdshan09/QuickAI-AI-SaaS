@@ -1,24 +1,55 @@
-import { Head } from "vite-react-ssg";
 import { getListedExams } from "../specs/loadSpecs.js";
 import ExamPicker from "../components/ExamPicker.jsx";
 import ExamDropdown from "../components/ExamDropdown.jsx";
 import RecentExams from "../components/RecentExams.jsx";
-import { useT } from "../i18n/index.jsx";
+import Seo from "../components/Seo.jsx";
+import { siteUrl } from "../lib/site.js";
+import { useLocale, useLocalePath, useT } from "../i18n/index.jsx";
 
 export default function Home() {
   const t = useT();
+  const { lang } = useLocale();
+  const lp = useLocalePath();
   const exams = getListedExams();
+  const homeUrl = siteUrl(lp("/"));
+
+  // Structured data for the landing page: the site, the publisher and the free web app itself.
+  // Nothing here is user- or exam-specific (crawlers see the same markup for everyone).
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "ExamSnap by Quick AI",
+      url: homeUrl,
+      inLanguage: lang,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Quick AI",
+      url: homeUrl,
+      logo: siteUrl("/favicon.svg"),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "ExamSnap",
+      url: homeUrl,
+      applicationCategory: "UtilitiesApplication",
+      operatingSystem: "Any",
+      inLanguage: lang,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+    },
+  ];
 
   return (
     <div>
-      <Head>
-        <title>ExamSnap by Quick AI — Exam photo & signature resizer</title>
-        <meta
-          name="description"
-          content="Pick your government exam, upload a photo, and download a photo or signature guaranteed to meet the exact size and format. Free, private, works on your phone."
-        />
-        <link rel="canonical" href="https://quickai.com/examsnap/" />
-      </Head>
+      <Seo
+        path="/"
+        title={t("seo.home.title")}
+        description={t("seo.home.desc")}
+        jsonLd={jsonLd}
+      />
 
       {/* Hero: intro on the left, quick-pick dropdown on the right (stacks on mobile). */}
       <div className="grid gap-6 lg:grid-cols-2 items-center">

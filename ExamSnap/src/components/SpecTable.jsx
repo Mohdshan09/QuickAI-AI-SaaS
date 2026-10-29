@@ -77,14 +77,14 @@ export default function SpecTable({ exam }) {
             <p className="font-medium text-slate-800">{d.label}</p>
             <p className="text-xs text-slate-400">{submissionText(d)}</p>
             <dl className="mt-2 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
-              <dt className="text-slate-400">Dimensions</dt>
+              <dt className="text-slate-400">{t("spec.colDimensions")}</dt>
               <dd className="text-slate-700">
                 {dimsText(d)}
                 {dimsHint(d) && <span className="mt-0.5 block text-slate-400">{dimsHint(d)}</span>}
               </dd>
-              <dt className="text-slate-400">Size</dt>
+              <dt className="text-slate-400">{t("spec.colSize")}</dt>
               <dd className="text-slate-700">{sizeText(d)}</dd>
-              <dt className="text-slate-400">Background</dt>
+              <dt className="text-slate-400">{t("spec.colBackground")}</dt>
               <dd className="capitalize text-slate-700">{bgText(d)}</dd>
             </dl>
           </li>
@@ -95,10 +95,10 @@ export default function SpecTable({ exam }) {
         <table className="w-full text-sm mt-2">
           <thead>
             <tr className="text-left text-slate-400">
-              <th className="px-4 py-2 font-medium">Document</th>
-              <th className="px-4 py-2 font-medium">Dimensions</th>
-              <th className="px-4 py-2 font-medium">Size</th>
-              <th className="px-4 py-2 font-medium">Background</th>
+              <th className="px-4 py-2 font-medium">{t("spec.colDocument")}</th>
+              <th className="px-4 py-2 font-medium">{t("spec.colDimensions")}</th>
+              <th className="px-4 py-2 font-medium">{t("spec.colSize")}</th>
+              <th className="px-4 py-2 font-medium">{t("spec.colBackground")}</th>
             </tr>
           </thead>
           <tbody>

@@ -1,55 +1,185 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/</loc>
+    <loc>https://exam-snap-drab.vercel.app/examsnap</loc>
     <lastmod>2026-10-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/custom</loc>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi</loc>
     <lastmod>2026-10-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/privacy</loc>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/custom</loc>
     <lastmod>2026-10-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/custom" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/custom" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/custom" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/ibps-clerk-csa-xvi-photo-signature-size</loc>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/custom</loc>
     <lastmod>2026-10-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/custom" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/custom" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/custom" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/check/ibps-clerk-csa-xvi-photo-signature-size</loc>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/privacy</loc>
     <lastmod>2026-10-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/privacy" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/privacy" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/ibps-po-mt-xvi-photo-signature-size</loc>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/privacy</loc>
     <lastmod>2026-10-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/privacy" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/privacy" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/check/ibps-po-mt-xvi-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/ibps-clerk-csa-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-clerk-csa-xvi-photo-signature-size" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/ibps-rrb-xv-office-assistant-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/ibps-clerk-csa-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-clerk-csa-xvi-photo-signature-size" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/check/ibps-rrb-xv-office-assistant-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/check/ibps-clerk-csa-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-clerk-csa-xvi-photo-signature-size" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/ibps-rrb-xv-officer-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-clerk-csa-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-clerk-csa-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-clerk-csa-xvi-photo-signature-size" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/check/ibps-rrb-xv-officer-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/ibps-po-mt-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-po-mt-xvi-photo-signature-size" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/ssc-chsl-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/ibps-po-mt-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-po-mt-xvi-photo-signature-size" />
   </url>
   <url>
-    <loc>https://quick-ai-frontend-zeta.vercel.app/examsnap/check/ssc-chsl-photo-signature-size</loc>
-    <lastmod>2026-10-29</lastmod>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/check/ibps-po-mt-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-po-mt-xvi-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-po-mt-xvi-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-po-mt-xvi-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-po-mt-xvi-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-office-assistant-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-office-assistant-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/ibps-rrb-xv-office-assistant-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-office-assistant-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-office-assistant-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-office-assistant-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-rrb-xv-office-assistant-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-rrb-xv-office-assistant-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-office-assistant-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-officer-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-officer-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/ibps-rrb-xv-officer-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ibps-rrb-xv-officer-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-officer-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-officer-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-rrb-xv-officer-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ibps-rrb-xv-officer-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ibps-rrb-xv-officer-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/ssc-chsl-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ssc-chsl-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/ssc-chsl-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/ssc-chsl-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/check/ssc-chsl-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ssc-chsl-photo-signature-size" />
+  </url>
+  <url>
+    <loc>https://exam-snap-drab.vercel.app/examsnap/hi/check/ssc-chsl-photo-signature-size</loc>
+    <lastmod>2026-10-02</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://exam-snap-drab.vercel.app/examsnap/check/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://exam-snap-drab.vercel.app/examsnap/hi/check/ssc-chsl-photo-signature-size" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://exam-snap-drab.vercel.app/examsnap/check/ssc-chsl-photo-signature-size" />
   </url>
 </urlset>

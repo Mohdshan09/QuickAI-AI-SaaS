@@ -1,6 +1,6 @@
-// Same-origin API client. The app is served under /examsnap/ and reaches the Vercel functions
-// via the proxy rewrite /examsnap/api/* → /api/* (ExamSnap vercel.json). So the base is the
-// Vite BASE_URL ("/examsnap/") + "api/", keeping every request same-origin (CSP connect-src 'self').
+// Same-origin API client. Requests go to the Vite base + "api/" — "/api/" when the app is a
+// domain root, "/examsnap/api/" when it is mounted in a subfolder (see scripts/site.mjs) —
+// keeping every request same-origin (CSP connect-src 'self').
 
 export const API_BASE = `${import.meta.env.BASE_URL || "/"}api/`;
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShieldCheck, Flag } from "lucide-react";
-import { useT } from "../i18n/index.jsx";
+import { useT, useLocalePath } from "../i18n/index.jsx";
 import LangToggle from "./LangToggle.jsx";
 import OutcomePrompt from "./OutcomePrompt.jsx";
 import RejectionForm from "./RejectionForm.jsx";
@@ -13,6 +13,7 @@ import { pingVisit } from "../lib/visit.js";
 // since exam pages are often entered directly from search results.
 export default function Layout() {
   const t = useT();
+  const lp = useLocalePath();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isHome = pathname === "/";
@@ -30,7 +31,7 @@ export default function Layout() {
     if (typeof window !== "undefined" && window.history.state && window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/");
+      navigate(lp("/"));
     }
   };
 
@@ -52,7 +53,7 @@ export default function Layout() {
                 <span className="hidden sm:inline">{t("nav.back")}</span>
               </button>
             )}
-            <Link to="/" className="flex items-baseline gap-1.5 min-w-0">
+            <Link to={lp("/")} className="flex items-baseline gap-1.5 min-w-0">
               <span className="text-lg font-bold text-blue-600">{t("brand")}</span>
               {/* The tagline is decoration — the first thing to drop when a phone is narrow. */}
               <span className="hidden text-xs text-slate-400 truncate xs:inline">{t("brandBy")}</span>
@@ -80,7 +81,7 @@ export default function Layout() {
             <Flag className="w-3.5 h-3.5" aria-hidden />
             {t("footer.rejected")}
           </button>
-          <Link to="/privacy" className="hover:text-blue-600 hover:underline">
+          <Link to={lp("/privacy")} className="hover:text-blue-600 hover:underline">
             {t("footer.privacy")}
           </Link>
         </div>

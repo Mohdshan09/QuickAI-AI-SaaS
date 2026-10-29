@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { ClientOnly } from "vite-react-ssg";
+import { useT } from "../i18n/index.jsx";
 
 // The interactive tool (crop + engine + worker + react-easy-crop) is client-only and needs
 // no SEO, so we render it only in the browser and load it as a separate chunk. This keeps
@@ -7,10 +8,11 @@ import { ClientOnly } from "vite-react-ssg";
 const ToolFlow = lazy(() => import("./ToolFlow.jsx"));
 
 export default function ClientToolFlow(props) {
+  const t = useT();
   return (
     <ClientOnly>
       {() => (
-        <Suspense fallback={<p className="py-10 text-center text-slate-500">Loading tool…</p>}>
+        <Suspense fallback={<p className="py-10 text-center text-slate-500">{t("tool.loading")}</p>}>
           <ToolFlow {...props} />
         </Suspense>
       )}

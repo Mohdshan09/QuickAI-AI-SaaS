@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { getExamsByGroup } from "../specs/loadSpecs.js";
-import { useT } from "../i18n/index.jsx";
+import { useT, useLocalePath } from "../i18n/index.jsx";
 
 // Grouped native <select> of all exams (grouped by conducting body). Native select is the
 // most mobile-friendly, accessible way to pick from a long list. Navigates on change.
 export default function ExamDropdown() {
   const t = useT();
+  const lp = useLocalePath();
   const navigate = useNavigate();
   const groups = getExamsByGroup();
 
@@ -17,7 +18,7 @@ export default function ExamDropdown() {
       <select
         id="exam-dropdown"
         defaultValue=""
-        onChange={(e) => e.target.value && navigate(`/${e.target.value}`)}
+        onChange={(e) => e.target.value && navigate(lp(`/${e.target.value}`))}
         className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-blue-500"
       >
         <option value="" disabled>
