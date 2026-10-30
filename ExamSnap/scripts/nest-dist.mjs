@@ -5,7 +5,7 @@
 //
 // Used only by `npm run build:vercel` (production). Local `npm run build` + `npm run dev`
 // stay un-nested so `vite preview`/dev keep working with base '/examsnap/'.
-import { readdirSync, mkdirSync, renameSync, existsSync } from "node:fs";
+import { readdirSync, mkdirSync, renameSync, existsSync, copyFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BASE } from "./site.mjs";
@@ -37,3 +37,10 @@ for (const name of entries) {
   renameSync(join(dist, name), join(nested, name));
 }
 console.log(`nest-dist: moved ${entries.length} entries into dist/${folder}/`);
+
+// Google looks for a favicon at the domain root, but everything lives under the subfolder —
+// mirror the icon files back to dist/ root so /favicon.ico resolves at the origin.
+for (const name of ["favicon.ico", "favicon.svg", "favicon-48.png", "favicon-192.png"]) {
+  const src = join(nested, name);
+  if (existsSync(src)) copyFileSync(src, join(dist, name));
+}
