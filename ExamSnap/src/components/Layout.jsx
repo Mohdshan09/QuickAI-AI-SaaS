@@ -39,7 +39,9 @@ export default function Layout() {
     <div className="flex flex-col min-h-[100dvh]">
       {/* Safe-area padding keeps the shell clear of the notch/home bar in standalone PWA mode
           (index.html opts into viewport-fit=cover). */}
-      <header className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-slate-200 pt-[env(safe-area-inset-top)]">
+      {/* Fully opaque: a translucent (or blur-backed) header lets the spec table and checklist
+          ghost through it while scrolling, which reads as overlapping text. */}
+      <header className="sticky top-0 z-10 bg-white border-b border-slate-200 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {!isHome && (

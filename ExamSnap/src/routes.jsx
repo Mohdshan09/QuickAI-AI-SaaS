@@ -1,4 +1,3 @@
-import { Outlet } from "react-router-dom";
 import { Head } from "vite-react-ssg";
 import { LocaleProvider } from "./i18n/index.jsx";
 import Layout from "./components/Layout.jsx";
@@ -13,6 +12,9 @@ import SpecAdminPage from "./pages/SpecAdminPage.jsx";
 
 // Root for one language subtree. Language lives in the URL (/hi/…) so prerendered pages, their
 // canonical URLs and the hreflang pair always agree; the provider never reads storage.
+// Layout renders <Outlet /> itself: keeping it out of the route tree means vite-react-ssg sees
+// the locale subtree as the direct parent of every page (a path-less wrapper route would reset
+// the prefix and make /hi/custom collide with /custom, so only the English file is emitted).
 function LocaleRoot({ locale }) {
   return (
     <LocaleProvider lang={locale}>
@@ -23,7 +25,7 @@ function LocaleRoot({ locale }) {
         <title>ExamSnap by Quick AI</title>
         <meta name="description" content="Exam-ready photo and signature in 30 seconds." />
       </Head>
-      <Outlet />
+      <Layout />
     </LocaleProvider>
   );
 }
@@ -64,11 +66,11 @@ export const routes = [
   {
     path: "/",
     element: <LocaleRoot locale="en" />,
-    children: [{ element: <Layout />, children: [...publicPages("en"), ...adminPages] }],
+    children: [...publicPages("en"), ...adminPages],
   },
   {
     path: "/hi",
     element: <LocaleRoot locale="hi" />,
-    children: [{ element: <Layout />, children: publicPages("hi") }],
+    children: publicPages("hi"),
   },
 ];
