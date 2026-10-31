@@ -25,6 +25,9 @@ const defaultOptions = () => ({
   cleanup: { strength: 0.5, ink: "original", thicken: false },
   background: false,
   strip: { name: "", date: new Date() },
+  // A user-selected ceiling inside the official size range. `null` retains the
+  // document's official maximum, which is the existing default behaviour.
+  compressionMaxKb: null,
 });
 
 // Drives the per-document flow for one exam (spec §7 + Phase 2 §4.2–4.5). Phase 2 adds live
@@ -49,6 +52,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
   const [lastCrop, setLastCrop] = useState(null);
   const [kit, setKit] = useState([]);
   const [checklistAcknowledged, setChecklistAcknowledged] = useState(false);
+  const [pendingCompressionMaxKb, setPendingCompressionMaxKb] = useState(null);
   const flowRef = useRef(null);
 
   // On phones the page hero + checklist sit above the crop/result views, so bring the flow to
@@ -75,6 +79,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
   // checklist before opening the picker. This resets when they switch document or exam.
   useEffect(() => {
     setChecklistAcknowledged(false);
+    setPendingCompressionMaxKb(null);
   }, [docIndex, exam.slug]);
 
   useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl]);
@@ -88,6 +93,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
     if (originalUrl) URL.revokeObjectURL(originalUrl);
     setOriginalUrl(null);
     setOptions(defaultOptions());
+    setPendingCompressionMaxKb(null);
     setLastCrop(null);
     setError("");
   };
@@ -307,6 +313,16 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
             />
           )}
 
+          <CompressionLimit
+            doc={doc}
+            outputKb={result.meta.sizeKb}
+            value={pendingCompressionMaxKb ?? options.compressionMaxKb ?? doc.maxKb}
+            onChange={setPendingCompressionMaxKb}
+            onCommit={(compressionMaxKb) => {
+              if (compressionMaxKb !== options.compressionMaxKb) rerun({ compressionMaxKb });
+            }}
+          />
+
           <ResultPanel
             result={result}
             previewUrl={previewUrl}
@@ -343,6 +359,60 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
       {/* Kit: ready count, per-file + ZIP download (persists across the flow). */}
       {step !== "crop" && <KitBar exam={exam} kit={kit} />}
     </div>
+  );
+}
+
+// Lets a student choose how much of an officially allowed KB range to use. The official
+// bounds remain on `doc`; this only gives the compressor a smaller maximum to aim for.
+function CompressionLimit({ doc, outputKb, value, onChange, onCommit }) {
+  const t = useT();
+  const min = Math.max(1, Math.ceil(doc.minKb || 0));
+  const max = Math.floor(doc.maxKb);
+  const selected = Math.min(max, Math.max(min, Math.round(Number(value) || max)));
+
+  // A slider needs two finite, distinct endpoints. Documents with no maximum (or a
+  // single permitted size) continue with the normal compressor behaviour.
+  if (!Number.isFinite(max) || max <= min) return null;
+
+  const commit = (event) => onCommit(Number(event.currentTarget.value));
+
+  return (
+    <section className="mb-3 rounded-xl border border-slate-200 bg-white p-4" aria-labelledby="compression-limit-title">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 id="compression-limit-title" className="text-sm font-semibold text-slate-700">
+          {t("compression.title")}
+        </h3>
+        <output htmlFor="compression-limit" className="shrink-0 text-sm font-semibold text-blue-700">
+          {t("compression.value", { value: selected })}
+        </output>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        {t("compression.hint", { min, max })}
+      </p>
+      <input
+        id="compression-limit"
+        type="range"
+        min={min}
+        max={max}
+        step="1"
+        value={selected}
+        onChange={(event) => onChange(Number(event.target.value))}
+        onPointerUp={commit}
+        onBlur={commit}
+        onKeyUp={(event) => {
+          if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) commit(event);
+        }}
+        className="mt-3 h-2 w-full cursor-pointer accent-blue-600"
+        aria-describedby="compression-limit-hint"
+      />
+      <div id="compression-limit-hint" className="mt-1 flex justify-between text-xs text-slate-400" aria-hidden="true">
+        <span>{min} KB</span>
+        <span>{max} KB</span>
+      </div>
+      <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-600">
+        {t("compression.current", { value: outputKb })}
+      </p>
+    </section>
   );
 }
 

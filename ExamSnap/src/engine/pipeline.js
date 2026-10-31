@@ -87,11 +87,18 @@ export async function run(ctx) {
   }
 
   // 7. compress
+  // The UI may request a smaller ceiling within the official range. Clamp it here as
+  // well so every caller (including the worker) can never relax the official maximum.
+  const officialMaxKb = docSpec.maxKb ?? Infinity;
+  const requestedMaxKb = Number(options.compressionMaxKb);
+  const maxKb = Number.isFinite(officialMaxKb) && Number.isFinite(requestedMaxKb)
+    ? Math.min(officialMaxKb, Math.max(docSpec.minKb ?? 0, requestedMaxKb))
+    : officialMaxKb;
   const { blob, quality, note, withinHardRange, padded } = await compressToRange(sized, {
     encode: encodeJpeg,
     scaleCanvas,
     minKb: docSpec.minKb ?? 0,
-    maxKb: docSpec.maxKb ?? Infinity,
+    maxKb,
     allowDimensionStepDown: Boolean(docSpec.allowDimensionStepDown),
   });
 
