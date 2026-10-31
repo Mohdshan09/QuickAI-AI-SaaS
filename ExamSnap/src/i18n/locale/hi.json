@@ -29,6 +29,7 @@
   "result.pass": "सभी जाँच पास हुईं",
   "result.fail": "कुछ जाँच विफल रहीं",
   "result.download": "डाउनलोड",
+  "result.downloadPdf": "PDF डाउनलोड करें",
   "result.redo": "फिर करें",
   "preview.before": "मूल दिखाएँ",
   "preview.after": "परिणाम दिखाएँ",

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Package, Download } from "lucide-react";
-import { downloadBlob } from "../lib/download.js";
+import { downloadBlob, filenameFor } from "../lib/download.js";
 import { track, EVENTS } from "../lib/analytics.js";
 import { useT } from "../i18n/index.jsx";
 
@@ -17,7 +17,7 @@ export default function KitBar({ exam, kit }) {
     try {
       const { buildKitZip } = await import("../engine/zip.js");
       const blob = await buildKitZip(kit, exam.name);
-      downloadBlob(blob, `${exam.slug.replace(/-photo-signature-size$/, "")}_kit.zip`);
+      downloadBlob(blob, filenameFor(exam.slug, "kit", "zip"));
       track(EVENTS.ZIP_DOWNLOAD, { exam: exam.slug, count: kit.length });
     } finally {
       setBusy(false);

@@ -29,6 +29,7 @@
   "result.pass": "All checks passed",
   "result.fail": "Some checks failed",
   "result.download": "Download",
+  "result.downloadPdf": "Download PDF",
   "result.redo": "Redo",
   "preview.before": "Show original",
   "preview.after": "Show result",

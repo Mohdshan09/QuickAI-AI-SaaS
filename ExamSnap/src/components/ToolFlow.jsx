@@ -191,6 +191,16 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
 
   const finishKit = () => clearKit(exam.slug);
 
+  // Same processed image, wrapped in a one-page PDF (exact pixel size preserved). Some portals
+  // only accept PDFs for photo/signature uploads.
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+    const { imageBlobToPdf } = await import("../lib/pdf.js");
+    const pdf = await imageBlobToPdf(result.blob);
+    downloadBlob(pdf, filenameFor(exam.slug, doc.type, "pdf"));
+    track(EVENTS.PDF_DOWNLOAD, { exam: exam.slug, doc: doc.type });
+  };
+
   // Jump directly to any document (e.g. do the signature before finishing the photo).
   const goToDoc = (i) => {
     if (i === docIndex && step !== "done") return;
@@ -303,6 +313,7 @@ export default function ToolFlow({ exam, allowOverride = false, initialFile = nu
             originalUrl={originalUrl}
             allowOverride={allowOverride}
             onDownload={handleDownload}
+            onDownloadPdf={handleDownloadPdf}
             onRedo={() => {
               reset();
               setStep("upload");

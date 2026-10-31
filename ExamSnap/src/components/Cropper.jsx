@@ -22,6 +22,10 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
 
   const onCropComplete = useCallback((_area, areaPx) => setAreaPixels(areaPx), []);
   const rotate = (delta) => setRotation((r) => (((r + delta) % 360) + 360) % 360);
+  // Degenerate layouts (e.g. zero-size container) make react-easy-crop report non-finite
+  // pixels; confirming those would crash the pipeline instead of cropping.
+  const cropValid =
+    areaPixels && [areaPixels.x, areaPixels.y, areaPixels.width, areaPixels.height].every(Number.isFinite);
 
   return (
     <div>
@@ -92,7 +96,7 @@ export default function Cropper({ file, aspect, isPhoto, onConfirm, onCancel }) 
         </button>
         <button
           type="button"
-          disabled={!areaPixels}
+          disabled={!cropValid}
           onClick={() => onConfirm({ cropPixels: areaPixels, rotationDeg: rotation })}
           className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-3 py-3 font-medium text-white disabled:opacity-50 sm:px-4"
         >

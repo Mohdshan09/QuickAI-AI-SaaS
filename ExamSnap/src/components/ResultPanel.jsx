@@ -1,22 +1,19 @@
 import { useState } from "react";
-import { CheckCircle2, XCircle, Download, RotateCcw, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, Download, FileDown, RotateCcw, AlertTriangle } from "lucide-react";
 import { useT } from "../i18n/index.jsx";
 
 // Validation checklist + download (spec §FR-16/17/18/20) with a quality-focused preview
 // (quality strategy §10): 100%/200% zoom + before/after toggle, plus quality warnings.
-// Download is enabled only when all checks pass; Custom mode may override.
-export default function ResultPanel({ result, previewUrl, originalUrl, allowOverride, onDownload, onRedo }) {
+// Download is enabled only when all checks pass; Custom mode may override. The PDF variant
+// wraps the same processed image in a one-page PDF for portals that reject raw images.
+export default function ResultPanel({ result, previewUrl, originalUrl, allowOverride, onDownload, onDownloadPdf, onRedo }) {
   const t = useT();
   const { meta, validation } = result;
   const [zoom, setZoom] = useState(100);
   const [showBefore, setShowBefore] = useState(false);
 
-  const handleDownload = () => {
-    if (!validation.pass && allowOverride) {
-      if (!window.confirm(t("result.overrideWarn"))) return;
-    }
-    onDownload();
-  };
+  const blocked = !validation.pass && !allowOverride;
+  const confirmOverride = () => validation.pass || allowOverride || window.confirm(t("result.overrideWarn"));
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 sm:flex sm:gap-5">
@@ -122,14 +119,25 @@ export default function ResultPanel({ result, previewUrl, originalUrl, allowOver
         </button>
         <button
           type="button"
-          disabled={!validation.pass && !allowOverride}
-          onClick={handleDownload}
+          disabled={blocked}
+          onClick={() => confirmOverride() && onDownload()}
           className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-3 py-3 font-medium text-white disabled:opacity-50 sm:px-4"
         >
           <Download className="w-4 h-4 shrink-0" aria-hidden />
           {t("result.download")}
         </button>
       </div>
+      {onDownloadPdf && (
+        <button
+          type="button"
+          disabled={blocked}
+          onClick={() => confirmOverride() && onDownloadPdf()}
+          className="mt-2 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 font-medium text-blue-700 disabled:opacity-50"
+        >
+          <FileDown className="w-4 h-4 shrink-0" aria-hidden />
+          {t("result.downloadPdf")}
+        </button>
+      )}
       </div>
     </div>
   );

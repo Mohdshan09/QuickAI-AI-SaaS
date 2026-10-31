@@ -17,6 +17,7 @@ export const EVENTS = {
   BACKGROUND_TIER_USED: "background_tier_used",
   STRIP_USED: "strip_used",
   ZIP_DOWNLOAD: "zip_download",
+  PDF_DOWNLOAD: "pdf_download",
   KIT_COMPLETED: "kit_completed",
   LANGUAGE: "language",
 };
